@@ -12,42 +12,28 @@ public class Main {
 
     public record Sexp(SexpKind kind, Token atom, Pair<Sexp, Sexp> pair) {
         public String pretty() {
-            if (kind == SexpKind.Atom) {
+            if (kind == SexpKind.Atom)
                 return atom.value;
-            }
-
-            if (pair.second() == null) {
+            if (pair.second() == null)
                 return String.format("(%s . NIL)", pair.first().pretty());
-            }
-
             return String.format("(%s . %s)", pair.first().pretty(), pair.second().pretty());
         }
 
         public static Sexp append(Sexp first, Sexp second) {
-            if (first == null) {
+            if (first == null)
                 return new Sexp(SexpKind.Pair, null, new Pair<>(second, null));
-            }
-
-            if (first.kind == SexpKind.Atom) {
+            if (first.kind == SexpKind.Atom)
                 return new Sexp(SexpKind.Pair, null, new Pair<>(first, second));
-            }
-
             return new Sexp(SexpKind.Pair, null, new Pair<>(first.pair.first(), append(first.pair.second(), second)));
         }
     }
 
-    public record Pair<A, B>(A first, B second) {
-    }
-
-    public enum TokenKind {
-        Integer, Identifier, Syntax
-    }
-
-    public record Token(String value, TokenKind kind) {
-    }
+    public record Pair<A, B>(A first, B second) { }
+    public enum TokenKind { Integer, Identifier, Syntax }
+    public record Token(String value, TokenKind kind) { }
 
     public static void fail(String msg, Object... args) {
-        System.err.printf(msg + "\n", args);
+        System.err.printf(msg + "%n", args);
         System.exit(1);
     }
 
@@ -58,7 +44,6 @@ public class Main {
             end++;
             c = program.charAt(end);
         }
-
         return new Pair<>(end, new Token(program.substring(cursor, end), TokenKind.Integer));
     }
 
@@ -72,7 +57,6 @@ public class Main {
             end++;
             c = program.charAt(end);
         }
-
         return new Pair<>(end, new Token(program.substring(cursor, end), TokenKind.Identifier));
     }
 
@@ -80,31 +64,24 @@ public class Main {
         var tokens = new ArrayList<Token>();
         outer: for (var i = 0; i < program.length(); i++) {
             var c = program.charAt(i);
-            if (c == ' ' || c == '\n' || c == '\t' || c == '\r') {
+            if (c == ' ' || c == '\n' || c == '\t' || c == '\r')
                 continue;
-            }
-
             if (c == ')' || c == '(') {
                 tokens.add(new Token(Character.toString(c), TokenKind.Syntax));
                 continue;
             }
-
             var lexers = new ArrayList<BiFunction<String, Integer, Pair<Integer, Token>>>(
                     Arrays.asList(Main::lexInteger, Main::lexIdentifier));
             for (var lexer : lexers) {
                 Pair<Integer, Token> lexResult = lexer.apply(program, i);
-                if (lexResult == null || lexResult.first == i) {
+                if (lexResult == null || lexResult.first == i)
                     continue;
-                }
-
                 i = lexResult.first() - 1;
                 tokens.add(lexResult.second());
                 continue outer;
             }
-
             fail("Unknown token near '%s' at index '%d'", program.substring(i, program.length()), i);
         }
-
         return tokens;
     }
 
@@ -124,15 +101,11 @@ public class Main {
                 cursor = child.first();
                 continue;
             }
-
-            if (t.value.equals(")")) {
+            if (t.value.equals(")"))
                 return new Pair<>(cursor, siblings);
-            }
-
             var s = new Sexp(SexpKind.Atom, t, null);
             siblings = Sexp.append(siblings, s);
         }
-
         return new Pair<>(cursor, siblings);
     }
 
@@ -155,16 +128,11 @@ public class Main {
             var args = ast.pair.second();
             return fn.apply(args, ctx);
         }
-
-        if (ast.atom.kind == TokenKind.Integer) {
+        if (ast.atom.kind == TokenKind.Integer)
             return Integer.parseInt(ast.atom.value);
-        }
-
         var value = ctx.get(ast.atom.value);
-        if (value != null) {
+        if (value != null)
             return value;
-        }
-
         BiFunction<Sexp, TreeMap<String, Object>, Object> function = (args, ignore) -> switch (ast.atom.value) {
             case "<=" -> {
                 var evalledArgs = evalArgs(args, ctx);
@@ -172,11 +140,10 @@ public class Main {
             }
             case "if" -> {
                 var test = eval(args.pair.first(), ctx);
-                if ((Boolean) test) {
+                if ((Boolean) test)
                     yield eval(args.pair.second().pair.first(), ctx);
-                } else {
+                else
                     yield eval(args.pair.second().pair.second().pair.first(), ctx);
-                }
             }
             case "def" -> {
                 var evalledArg = eval(args.pair.second().pair.first(), ctx);
@@ -186,7 +153,6 @@ public class Main {
             case "lambda" -> {
                 var params = args.pair.first();
                 var body = args.pair.second();
-
                 BiFunction<Sexp, TreeMap<String, Object>, Object> lambda = (callArgs, callCtx) -> {
                     var evalledCallArgs = evalArgs(callArgs, callCtx);
                     var childCallCtx = (TreeMap<String, Object>) callCtx.clone();
@@ -214,18 +180,16 @@ public class Main {
             }
             case "+" -> {
                 var res = 0;
-                for (var arg : evalArgs(args, ctx)) {
+                for (var arg : evalArgs(args, ctx))
                     res += (Integer) arg;
-                }
                 yield res;
             }
             case "-" -> {
                 var evalledArgs = evalArgs(args, ctx);
                 var res = (Integer) evalledArgs.get(0);
                 var rest = evalledArgs.subList(1, evalledArgs.size());
-                for (var arg : rest) {
+                for (var arg : rest)
                     res -= (Integer) arg;
-                }
                 yield res;
             }
             default -> {

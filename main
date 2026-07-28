@@ -1,0 +1,5 @@
+#!/bin/sh
+
+T=~/git/rosetta/target
+CP=$T/classes:$T/dependency/*
+java -cp $CP saka1029.rosetta.Main "$@"
