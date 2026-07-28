@@ -202,7 +202,6 @@ public class Main {
                     begin = Sexp.append(begin, body);
                     return eval(begin, childCallCtx);
                 };
-
                 yield lambda;
             }
             case "begin" -> {
@@ -211,7 +210,6 @@ public class Main {
                     res = eval(args.pair.first(), ctx);
                     args = args.pair.second();
                 }
-
                 yield res;
             }
             case "+" -> {
@@ -219,7 +217,6 @@ public class Main {
                 for (var arg : evalArgs(args, ctx)) {
                     res += (Integer) arg;
                 }
-
                 yield res;
             }
             case "-" -> {
