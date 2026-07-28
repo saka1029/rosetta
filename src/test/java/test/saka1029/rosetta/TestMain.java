@@ -37,4 +37,10 @@ public class TestMain {
             """));
     }
 
+    // 関数は一度評価されるのでScheme的なLisp
+    @Test
+    public void testLambda() {
+        assertEquals(Integer.valueOf(4), Main.eval("((lambda (a) (+ a a)) 2)"));
+    }
+
 }
