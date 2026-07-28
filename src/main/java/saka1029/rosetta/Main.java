@@ -87,13 +87,9 @@ public class Main {
 
     public static Pair<Integer, Sexp> parse(ArrayList<Token> tokens, int cursor) {
         Sexp siblings = null;
-
-        if (!tokens.get(cursor).value.equals("(")) {
+        if (!tokens.get(cursor).value.equals("("))
             fail("Expected opening parenthesis, got '%s'", tokens.get(cursor).value);
-        }
-
         cursor++;
-
         for (var t = tokens.get(cursor); cursor < tokens.size(); cursor++, t = tokens.get(cursor)) {
             if (t.value.equals("(")) {
                 var child = parse(tokens, cursor);
@@ -163,7 +159,6 @@ public class Main {
                         i++;
                         iter = iter.pair.second();
                     }
-
                     var begin = new Sexp(SexpKind.Atom, new Token("begin", TokenKind.Identifier), null);
                     begin = Sexp.append(begin, body);
                     return eval(begin, childCallCtx);
