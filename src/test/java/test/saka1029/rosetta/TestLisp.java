@@ -39,13 +39,18 @@ public class TestLisp {
 
     public interface List extends Expr {
         public static List of(Expr... exprs) {
-            List result = Nil.NIL;
+            return list(Nil.NIL, exprs);
+        }
+        public static List list(Expr end, Expr... exprs) {
+            if (exprs.length <= 0)
+                throw new IllegalArgumentException("exprs");
+            Expr result = end;
             for (int i = exprs.length - 1; i >= 0; --i)
                 result = new Cons(exprs[i], result);
-            return result;
+            return (Cons)result;
         }
-        public static List of(java.util.List<Expr> list) {
-            return of(list.toArray(Expr[]::new));
+        public static List list(Expr end, java.util.List<Expr> list) {
+            return list(end, list.toArray(Expr[]::new));
         }
     }
 
@@ -118,7 +123,10 @@ public class TestLisp {
                 spaces();
                 if (ch == ')') {
                     get();  // skip ')'
-                    return List.of(result);
+                    return List.list(Nil.NIL, result);
+                } else if (ch == '.') {
+                    get();  // skip '.'
+                    return List.list(parse(), result);
                 }
                 Expr e = parse();
                 if (e == null)
