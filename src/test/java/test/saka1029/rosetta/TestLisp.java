@@ -16,6 +16,11 @@ public class TestLisp {
     public interface Atom extends Expr {}
 
     public record Int(int value) implements Atom {
+
+        public static Int of(int value) {
+            return new Int(value);
+        }
+
         @Override
         public final String toString() {
             return "" + value;
@@ -194,9 +199,9 @@ public class TestLisp {
 
     @Test
     public void testParseInt() {
-        assertEquals(java.util.List.of(new Int(123)), parse("123"));
-        assertEquals(java.util.List.of(new Int(123)), parse("123  "));
-        assertEquals(java.util.List.of(new Int(123)), parse("  123  "));
+        assertEquals(java.util.List.of(Int.of(123)), parse("123"));
+        assertEquals(java.util.List.of(Int.of(123)), parse("123  "));
+        assertEquals(java.util.List.of(Int.of(123)), parse("  123  "));
     }
 
     @Test
