@@ -80,6 +80,12 @@ public class TestLisp {
         int[] in;
         int next, current, ch;
 
+        Parser(String source) {
+            this.in = source.codePoints().toArray();
+            this.next = this.current = 0;
+            this.ch = get();
+        }
+
         int get() {
             current = next;
             return ch = next < in.length ? in[next++] : -1;
@@ -151,40 +157,36 @@ public class TestLisp {
                 }
             };
         }
-
-        java.util.List<Expr> parse(String source) {
-            in = source.codePoints().toArray();
-            next = current = 0;
-            ch = get();
-            java.util.List<Expr> result = new ArrayList<>();
-            for (Expr e = parse(); e != null; e = parse())
-                result.add(e);
-            return result;
-        }
     }
 
-    static final Parser parser = new Parser();
+    public static java.util.List<Expr> parse(String source) {
+        Parser parser = new Parser(source);
+        java.util.List<Expr> result = new ArrayList<>();
+        for (Expr e = parser.parse(); e != null; e = parser.parse())
+            result.add(e);
+        return result;
+    }
 
     @Test
     public void testParseAtom() {
-        assertEquals(java.util.List.of(Symbol.of("abc")), parser.parse("abc"));
-        assertEquals(java.util.List.of(Symbol.of("abc")), parser.parse("abc  "));
-        assertEquals(java.util.List.of(Symbol.of("abc")), parser.parse("   abc  "));
+        assertEquals(java.util.List.of(Symbol.of("abc")), parse("abc"));
+        assertEquals(java.util.List.of(Symbol.of("abc")), parse("abc  "));
+        assertEquals(java.util.List.of(Symbol.of("abc")), parse("   abc  "));
     }
 
     @Test
     public void testParseInt() {
-        assertEquals(java.util.List.of(new Int(123)), parser.parse("123"));
-        assertEquals(java.util.List.of(new Int(123)), parser.parse("123  "));
-        assertEquals(java.util.List.of(new Int(123)), parser.parse("  123  "));
+        assertEquals(java.util.List.of(new Int(123)), parse("123"));
+        assertEquals(java.util.List.of(new Int(123)), parse("123  "));
+        assertEquals(java.util.List.of(new Int(123)), parse("  123  "));
     }
 
     @Test
     public void testParseList() {
-        assertEquals(java.util.List.of(List.of(new Int(123))), parser.parse("(123)"));
-        assertEquals(java.util.List.of(List.of(new Int(123))), parser.parse("(123  )"));
-        assertEquals(java.util.List.of(List.of(new Int(123))), parser.parse("(   123   )"));
-        assertEquals(java.util.List.of(List.of(new Int(123))), parser.parse("   (   123   )"));
-        assertEquals(java.util.List.of(List.of(new Int(123))), parser.parse("   (   123   )   "));
+        assertEquals(java.util.List.of(List.of(new Int(123))), parse("(123)"));
+        assertEquals(java.util.List.of(List.of(new Int(123))), parse("(123  )"));
+        assertEquals(java.util.List.of(List.of(new Int(123))), parse("(   123   )"));
+        assertEquals(java.util.List.of(List.of(new Int(123))), parse("   (   123   )"));
+        assertEquals(java.util.List.of(List.of(new Int(123))), parse("   (   123   )   "));
     }
 }
