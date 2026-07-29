@@ -76,7 +76,7 @@ public class TestLisp {
             for (;;) {
                 spaces();
                 if (ch == ')') {
-                    get();
+                    get();  // skip ')'
                     return List.of(result);
                 }
                 Expr e = parse();
