@@ -1,6 +1,10 @@
 package test.saka1029.rosetta;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 public class TestLisp {
@@ -22,10 +26,18 @@ public class TestLisp {
         }
     }
 
-    public interface List extends Expr {}
+    public interface List extends Expr {
+        public static List of(LinkedList<Expr> list) {
+            List result = Nil.NIL;
+            ListIterator<Expr> it = list.listIterator(list.size());
+            while (it.hasPrevious())
+                result = new Cons(it.previous(), result);
+            return result;
+        }
+    }
 
     public static class Nil implements List {
-        Nil NIL = new Nil();
+        public static Nil NIL = new Nil();
         private Nil() {}
     }
 
@@ -54,7 +66,18 @@ public class TestLisp {
             return ch = start < in.length ? in[start++] : -1;
         }
 
+        void spaces() {
+            while (Character.isWhitespace(ch))
+                get();
+        }
+
         List list() {
+            LinkedList<Expr> result = new LinkedList<>();
+            for (;;) {
+                Expr e = parse();
+                if (e == null)
+                    return;
+            }
 
         }
 
@@ -63,11 +86,11 @@ public class TestLisp {
         }
 
         Expr parse() {
-            while (Character.isWhitespace(ch))
-                get();
+            spaces();
             int begin = start;
             return switch (ch) {
-                case '(' -> list();
+                case -1 -> null;
+                case '(' -> list ();
                 case ')' -> throw new RuntimeException();
                 case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
                     while (isDigit(ch))
@@ -78,11 +101,14 @@ public class TestLisp {
             };
         }
 
-        Expr parse(String source) {
+        java.util.List<Expr> parse(String source) {
             this.in = source.codePoints().toArray();
             this.start = 0;
             this.ch = get();
-            return parse();
+            java.util.List<Expr> result = new ArrayList<>();
+            for (Expr e = parse(); e != null; e = parse())
+                result.add(parse());
+            return result;
         }
     }
 
