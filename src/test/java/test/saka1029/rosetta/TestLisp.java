@@ -25,12 +25,15 @@ public class TestLisp {
     public static class Symbol implements Atom {
         public final String value;
         static final Map<String, Symbol> all = new HashMap<>();
+
         private Symbol(String value) {
             this.value = value;
         }
+
         public static Symbol of(String value) {
             return all.computeIfAbsent(value, k -> new Symbol(value));
         }
+
         @Override
         public String toString() {
             return value;
@@ -38,9 +41,11 @@ public class TestLisp {
     }
 
     public interface List extends Expr {
+        
         public static List of(Expr... exprs) {
             return list(Nil.NIL, exprs);
         }
+
         public static List list(Expr end, Expr... exprs) {
             if (exprs.length <= 0)
                 throw new IllegalArgumentException("exprs");
@@ -49,6 +54,7 @@ public class TestLisp {
                 result = new Cons(exprs[i], result);
             return (Cons)result;
         }
+
         public static List list(Expr end, java.util.List<Expr> list) {
             return list(end, list.toArray(Expr[]::new));
         }
@@ -57,7 +63,11 @@ public class TestLisp {
     public static class Nil implements List {
         public static Nil NIL = new Nil();
         private Nil() {}
-        @Override public String toString() { return "()"; }
+
+        @Override
+        public String toString() {
+            return "()";
+        }
     }
 
     public record Cons(Expr car, Expr cdr) implements List {
@@ -135,31 +145,31 @@ public class TestLisp {
             }
         }
 
-        Int integer(int begin, int sign) {
+        Int integer(int start, int sign) {
             while (isDigit(ch))
                 get();
-            return new Int(sign * Integer.parseInt(new String(in, begin, current - begin)));
+            return new Int(sign * Integer.parseInt(new String(in, start, current - start)));
         }
 
-        Symbol symbol(int begin) {
+        Symbol symbol(int start) {
             get();
             while (isSymbolRest(ch))
                 get();
-            return Symbol.of(new String(in, begin, current - begin));
+            return Symbol.of(new String(in, start, current - start));
         }
 
         Expr parse() {
             spaces();
-            int begin = next - 1;
+            int start = current;
             return switch (ch) {
                 case -1 -> null;
                 case '(' -> list ();
                 case ')' -> throw new RuntimeException("Unexpected ')'");
-                case '-' -> isDigit(get()) ? integer(begin, -1) : Symbol.of("-");
-                case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> integer(begin, 1);
+                case '-' -> isDigit(get()) ? integer(start, -1) : Symbol.of("-");
+                case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> integer(start, 1);
                 default -> {
                     if (isSymbolFirst(get()))
-                        yield symbol(begin);
+                        yield symbol(start);
                     else 
                         throw new RuntimeException("Unknown character '%c'".formatted((char)ch));
                 }
