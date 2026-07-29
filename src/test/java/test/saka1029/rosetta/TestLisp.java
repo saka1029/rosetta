@@ -74,11 +74,15 @@ public class TestLisp {
         List list() {
             LinkedList<Expr> result = new LinkedList<>();
             for (;;) {
+                spaces();
+                if (ch == ')') {
+                    get();
+                    return List.of(result);
+                }
                 Expr e = parse();
                 if (e == null)
-                    return;
+                    throw new RuntimeException("Unexpected EOF");
             }
-
         }
 
         Symbol symbol() {
