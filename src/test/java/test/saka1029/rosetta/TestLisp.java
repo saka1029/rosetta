@@ -32,8 +32,27 @@ public class TestLisp {
     public record Cons(Expr car, List cdr) implements List {}
 
     static final class Parser {
-        String in;
-        int start, end;
+        int[] in;
+        int start, ch;
+
+        static boolean isDigit(int ch) {
+            return ch >= '0' && ch <= '9';
+        }
+
+        static boolean isSymbolFirst(int ch) {
+            return switch (ch) {
+                case '(', ')', '.' -> false;
+                default -> !Character.isWhitespace(ch) && !isDigit(ch);
+            };
+        }
+
+        static boolean isSymbolRest(int ch) {
+            return isSymbolFirst(ch) || isDigit(ch);
+        }
+
+        int get() {
+            return ch = start < in.length ? in[start++] : -1;
+        }
 
         List list() {
 
@@ -44,24 +63,25 @@ public class TestLisp {
         }
 
         Expr parse() {
-            while (Character.isWhitespace(in.charAt(start)))
-                ++start;
+            while (Character.isWhitespace(ch))
+                get();
             int begin = start;
-            return switch (in.charAt(start)) {
+            return switch (ch) {
                 case '(' -> list();
+                case ')' -> throw new RuntimeException();
                 case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
-                    while (Character.isDigit(in.charAt(start)))
-                        ++start;
-                    yield new Int(Integer.parseInt(in.substring(begin, start)));
+                    while (isDigit(ch))
+                        get();
+                    yield new Int(Integer.parseInt(new String(in, begin, start - begin)));
                 }
                 default -> symbol();
             };
         }
 
         Expr parse(String source) {
-            this.in = source;
+            this.in = source.codePoints().toArray();
             this.start = 0;
-            this.end = source.length();
+            this.ch = get();
             return parse();
         }
     }
