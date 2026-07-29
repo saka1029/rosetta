@@ -1,7 +1,6 @@
 package test.saka1029.rosetta;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.ListIterator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -72,6 +71,7 @@ public class TestLisp {
         }
 
         List list() {
+            get();  // skip '('
             LinkedList<Expr> result = new LinkedList<>();
             for (;;) {
                 spaces();
@@ -85,8 +85,17 @@ public class TestLisp {
             }
         }
 
-        Symbol symbol() {
+        Int integer(int begin, int sign) {
+            while (isDigit(ch))
+                get();
+            return new Int(sign * Integer.parseInt(new String(in, begin, start - begin)));
+        }
 
+        Symbol symbol(int begin) {
+            get();
+            while (isSymbolRest(ch))
+                get();
+            return Symbol.of(new String(in, begin, start - begin));
         }
 
         Expr parse() {
@@ -95,13 +104,15 @@ public class TestLisp {
             return switch (ch) {
                 case -1 -> null;
                 case '(' -> list ();
-                case ')' -> throw new RuntimeException();
-                case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
-                    while (isDigit(ch))
-                        get();
-                    yield new Int(Integer.parseInt(new String(in, begin, start - begin)));
+                case ')' -> throw new RuntimeException("Unexpected ')'");
+                case '-' -> isDigit(get()) ? integer(begin, -1) : Symbol.of("-");
+                case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> integer(begin, 1);
+                default -> {
+                    if (isSymbolFirst(get()))
+                        yield symbol(begin);
+                    else 
+                        throw new RuntimeException("Unknown character '%c'".formatted((char)ch));
                 }
-                default -> symbol();
             };
         }
 
