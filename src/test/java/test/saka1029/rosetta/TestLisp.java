@@ -1,10 +1,13 @@
 package test.saka1029.rosetta;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
-import java.util.ListIterator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+
+import org.junit.Test;
 
 public class TestLisp {
 
@@ -12,7 +15,12 @@ public class TestLisp {
 
     public interface Atom extends Expr {}
 
-    public record Int(int value) implements Atom {}
+    public record Int(int value) implements Atom {
+        @Override
+        public final String toString() {
+            return "" + value;
+        }
+    }
 
     public static class Symbol implements Atom {
         public final String value;
@@ -23,28 +31,59 @@ public class TestLisp {
         public static Symbol of(String value) {
             return all.computeIfAbsent(value, k -> new Symbol(value));
         }
+        @Override
+        public String toString() {
+            return value;
+        }
     }
 
     public interface List extends Expr {
-        public static List of(LinkedList<Expr> list) {
+        public static List of(Expr... exprs) {
             List result = Nil.NIL;
-            ListIterator<Expr> it = list.listIterator(list.size());
-            while (it.hasPrevious())
-                result = new Cons(it.previous(), result);
+            for (int i = exprs.length - 1; i >= 0; --i)
+                result = new Cons(exprs[i], result);
             return result;
+        }
+        public static List of(java.util.List<Expr> list) {
+            return of(list.toArray(Expr[]::new));
         }
     }
 
     public static class Nil implements List {
         public static Nil NIL = new Nil();
         private Nil() {}
+        @Override public String toString() { return "()"; }
     }
 
-    public record Cons(Expr car, List cdr) implements List {}
+    public record Cons(Expr car, Expr cdr) implements List {
+        @Override
+        public final String toString() {
+            StringBuilder sb = new StringBuilder("(");
+            sb.append(car);
+            Expr e = cdr;
+            while (true) {
+                if (e == Nil.NIL) {
+                    break;
+                } else if (e instanceof Cons cons) {
+                    sb.append(" ").append(cons.car);
+                    e = cons.cdr;
+                } else { // dot pair
+                    sb.append(" . ").append(e);
+                    break;
+                }
+            }
+            return sb.append(")").toString();
+        }
+    }
 
     static final class Parser {
         int[] in;
-        int start, ch;
+        int next, current, ch;
+
+        int get() {
+            current = next;
+            return ch = next < in.length ? in[next++] : -1;
+        }
 
         static boolean isDigit(int ch) {
             return ch >= '0' && ch <= '9';
@@ -52,17 +91,13 @@ public class TestLisp {
 
         static boolean isSymbolFirst(int ch) {
             return switch (ch) {
-                case '(', ')', '.' -> false;
+                case -1, '(', ')', '.' -> false;
                 default -> !Character.isWhitespace(ch) && !isDigit(ch);
             };
         }
 
         static boolean isSymbolRest(int ch) {
             return isSymbolFirst(ch) || isDigit(ch);
-        }
-
-        int get() {
-            return ch = start < in.length ? in[start++] : -1;
         }
 
         void spaces() {
@@ -82,25 +117,26 @@ public class TestLisp {
                 Expr e = parse();
                 if (e == null)
                     throw new RuntimeException("Unexpected EOF");
+                result.addFirst(e);
             }
         }
 
         Int integer(int begin, int sign) {
             while (isDigit(ch))
                 get();
-            return new Int(sign * Integer.parseInt(new String(in, begin, start - begin)));
+            return new Int(sign * Integer.parseInt(new String(in, begin, current - begin)));
         }
 
         Symbol symbol(int begin) {
             get();
             while (isSymbolRest(ch))
                 get();
-            return Symbol.of(new String(in, begin, start - begin));
+            return Symbol.of(new String(in, begin, current - begin));
         }
 
         Expr parse() {
             spaces();
-            int begin = start;
+            int begin = next - 1;
             return switch (ch) {
                 case -1 -> null;
                 case '(' -> list ();
@@ -117,16 +153,38 @@ public class TestLisp {
         }
 
         java.util.List<Expr> parse(String source) {
-            this.in = source.codePoints().toArray();
-            this.start = 0;
-            this.ch = get();
+            in = source.codePoints().toArray();
+            next = current = 0;
+            ch = get();
             java.util.List<Expr> result = new ArrayList<>();
             for (Expr e = parse(); e != null; e = parse())
-                result.add(parse());
+                result.add(e);
             return result;
         }
     }
 
     static final Parser parser = new Parser();
 
+    @Test
+    public void testParseAtom() {
+        assertEquals(java.util.List.of(Symbol.of("abc")), parser.parse("abc"));
+        assertEquals(java.util.List.of(Symbol.of("abc")), parser.parse("abc  "));
+        assertEquals(java.util.List.of(Symbol.of("abc")), parser.parse("   abc  "));
+    }
+
+    @Test
+    public void testParseInt() {
+        assertEquals(java.util.List.of(new Int(123)), parser.parse("123"));
+        assertEquals(java.util.List.of(new Int(123)), parser.parse("123  "));
+        assertEquals(java.util.List.of(new Int(123)), parser.parse("  123  "));
+    }
+
+    @Test
+    public void testParseList() {
+        assertEquals(java.util.List.of(List.of(new Int(123))), parser.parse("(123)"));
+        assertEquals(java.util.List.of(List.of(new Int(123))), parser.parse("(123  )"));
+        assertEquals(java.util.List.of(List.of(new Int(123))), parser.parse("(   123   )"));
+        assertEquals(java.util.List.of(List.of(new Int(123))), parser.parse("   (   123   )"));
+        assertEquals(java.util.List.of(List.of(new Int(123))), parser.parse("   (   123   )   "));
+    }
 }
