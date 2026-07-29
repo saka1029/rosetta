@@ -169,14 +169,13 @@ public class TestLisp {
             return switch (ch) {
                 case -1 -> null;
                 case '(' -> list ();
-                case ')' -> throw new RuntimeException("Unexpected ')'");
                 case '-' -> isDigit(get()) ? integer(start, -1) : Symbol.of("-");
                 case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> integer(start, 1);
                 default -> {
                     if (isSymbolFirst(get()))
                         yield symbol(start);
                     else 
-                        throw new RuntimeException("Unknown character '%c'".formatted((char)ch));
+                        throw new RuntimeException("Unexpected character '%c'".formatted((char)ch));
                 }
             };
         }
