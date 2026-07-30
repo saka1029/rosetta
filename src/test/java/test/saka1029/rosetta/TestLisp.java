@@ -266,7 +266,9 @@ public class TestLisp {
     }
 
     @Test
-    public void testConsToString() {
+    public void testToString() {
+        assertEquals("12345", parse("  12345").get(0).toString());
+        assertEquals("abc.def", parse("  abc.def").get(0).toString());
         assertEquals("(a b)", parse("(a b)").get(0).toString());
         assertEquals("(1 2 3)", parse("(1 2 3)").get(0).toString());
         assertEquals("(a . b)", parse("(a . b)").get(0).toString());
