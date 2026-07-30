@@ -113,6 +113,29 @@ public class TestLisp {
     }
 
     @Test
+    public void testSymbolException() {
+        try {
+            symbol(null);
+        } catch (NullPointerException e) {
+            assertEquals("value", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testConsException() {
+        try {
+            Cons.of(null, symbol("b"));
+        } catch (NullPointerException e) {
+            assertEquals("car", e.getMessage());
+        }
+        try {
+            Cons.of(symbol("a"), null);
+        } catch (NullPointerException e) {
+            assertEquals("cdr", e.getMessage());
+        }
+    }
+
+    @Test
     public void testDotPairException() {
         try {
             parse("(a b . a b)");

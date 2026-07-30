@@ -32,7 +32,7 @@ public class Lisp {
         public final String value;
 
         private Symbol(String value) {
-            Objects.requireNonNull(value, "Symbol name must not be null");
+            Objects.requireNonNull(value, "value");
             this.value = value;
         }
 
@@ -78,8 +78,8 @@ public class Lisp {
 
     public record Cons(Expr car, Expr cdr) implements List {
         public static Cons of(Expr car, Expr cdr) {
-            Objects.requireNonNull(car, "car must not be null");
-            Objects.requireNonNull(cdr, "cdr must not be null");
+            Objects.requireNonNull(car, "car");
+            Objects.requireNonNull(cdr, "cdr");
             return new Cons(car, cdr);
         }
 
