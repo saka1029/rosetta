@@ -236,6 +236,7 @@ public class TestLisp {
         assertEquals(jlist(integer(-123)), parse("-123"));
         assertEquals(jlist(integer(-123)), parse("-123  "));
         assertEquals(jlist(integer(-123)), parse("  -123  "));
+        assertEquals(jlist(symbol("-"), integer(123)), parse("  -  123  "));
     }
 
     @Test
