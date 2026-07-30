@@ -14,7 +14,6 @@ public class Lisp {
     public interface Atom extends Expr {}
 
     public record Int(int value) implements Atom {
-
         public static Int of(int value) {
             return new Int(value);
         }
@@ -47,13 +46,19 @@ public class Lisp {
     }
 
     public interface List extends Expr {
-        
+        public static List NIL = new List() {
+            @Override
+            public String toString() {
+                return "()";
+            }
+        };
+
         public static List of(Expr... exprs) {
-            return list(Nil.NIL, exprs);
+            return list(List.NIL, exprs);
         }
 
         public static List list(Expr end, Expr... exprs) {
-            if (exprs.length <= 0 && end != Nil.NIL)
+            if (exprs.length <= 0 && end != List.NIL)
                 throw new IllegalArgumentException("exprs");
             Expr result = end;
             for (int i = exprs.length - 1; i >= 0; --i)
@@ -66,16 +71,6 @@ public class Lisp {
         }
     }
 
-    public static class Nil implements List {
-        public static Nil NIL = new Nil();
-        private Nil() {}
-
-        @Override
-        public String toString() {
-            return "()";
-        }
-    }
-
     public record Cons(Expr car, Expr cdr) implements List {
         public static Cons of(Expr car, Expr cdr) {
             Objects.requireNonNull(car, "car");
@@ -85,14 +80,14 @@ public class Lisp {
 
         @Override
         public final String toString() {
-            if (car.equals(Symbol.QUOTE) && cdr instanceof Cons ccdr && ccdr.cdr == Nil.NIL)
+            if (car.equals(Symbol.QUOTE) && cdr instanceof Cons ccdr && ccdr.cdr == List.NIL)
                 return "'" + ccdr.car;
             StringBuilder sb = new StringBuilder("(");
             sb.append(car);
             Expr e;
             for (e = cdr; e instanceof Cons cons; e = cons.cdr)
                 sb.append(" ").append(cons.car);
-            if (e != Nil.NIL)
+            if (e != List.NIL)
                 sb.append(" . ").append(e);
             return sb.append(")").toString();
         }
@@ -140,7 +135,7 @@ public class Lisp {
                 spaces();
                 if (ch == ')') {
                     get();  // skip ')'
-                    return List.list(Nil.NIL, result);
+                    return List.list(List.NIL, result);
                 } else if (ch == '.') {
                     get();  // skip '.'
                     List list = List.list(read(), result);
@@ -160,7 +155,7 @@ public class Lisp {
         Int integer(int start) {
             while (isDigit(ch))
                 get();
-            return new Int(Integer.parseInt(new String(in, start, current - start)));
+            return Int.of(Integer.parseInt(new String(in, start, current - start)));
         }
 
         Symbol symbol(int start) {
