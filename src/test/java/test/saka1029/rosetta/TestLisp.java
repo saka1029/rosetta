@@ -87,6 +87,8 @@ public class TestLisp {
 
         @Override
         public final String toString() {
+            if (car.equals(Symbol.QUOTE) && cdr instanceof Cons ccdr && ccdr.cdr == Nil.NIL)
+                return "'" + ccdr.car;
             StringBuilder sb = new StringBuilder("(");
             sb.append(car);
             Expr e = cdr;
@@ -268,5 +270,18 @@ public class TestLisp {
         assertEquals(jlist(list(symbol("a."), symbol("b"))), parse("(a. b)"));
         assertEquals(jlist(list(symbol("a.b"))), parse("(a.b)"));
         assertEquals(jlist(cons(symbol("a"), list(symbol("b")))), parse("(a .(b))"));
+    }
+
+    @Test
+    public void testConsToString() {
+        assertEquals("(a b)", parse("(a b)").get(0).toString());
+        assertEquals("(1 2 3)", parse("(1 2 3)").get(0).toString());
+        assertEquals("(a . b)", parse("(a . b)").get(0).toString());
+        assertEquals("'a", parse("'a").get(0).toString());
+        assertEquals("'(a b)", parse("'(a b)").get(0).toString());
+        assertEquals("'(a b)", parse("(quote (a b))").get(0).toString());
+        assertEquals("(quote . cdr)", parse("(quote . cdr)").get(0).toString());
+        assertEquals("(quote a . b)", parse("(quote a . b)").get(0).toString());
+        assertEquals("(quote)", parse("(quote)").get(0).toString());
     }
 }
