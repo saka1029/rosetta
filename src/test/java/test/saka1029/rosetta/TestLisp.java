@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.junit.Test;
 
@@ -27,10 +28,13 @@ public class TestLisp {
     }
 
     public static class Symbol implements Atom {
-        public final String value;
         static final Map<String, Symbol> all = new HashMap<>();
+        public static final Symbol QUOTE = Symbol.of("quote");
+
+        public final String value;
 
         private Symbol(String value) {
+            Objects.requireNonNull(value, "Symbol name must not be null");
             this.value = value;
         }
 
@@ -76,6 +80,8 @@ public class TestLisp {
 
     public record Cons(Expr car, Expr cdr) implements List {
         public static Cons of(Expr car, Expr cdr) {
+            Objects.requireNonNull(car, "car must not be null");
+            Objects.requireNonNull(cdr, "cdr must not be null");
             return new Cons(car, cdr);
         }
 
@@ -144,14 +150,14 @@ public class TestLisp {
                     return List.list(Nil.NIL, result);
                 } else if (ch == '.') {
                     get();  // skip '.'
-                    List list = List.list(parse(), result);
+                    List list = List.list(read(), result);
                     spaces();
                     if (ch != ')')
                         throw new RuntimeException("')' expected");
                     get();  // skip ')'
                     return list;
                 }
-                Expr e = parse();
+                Expr e = read();
                 if (e == null)
                     throw new RuntimeException("Unexpected EOF");
                 result.addLast(e);
@@ -170,13 +176,20 @@ public class TestLisp {
             return Symbol.of(new String(in, start, current - start));
         }
 
-        Expr parse() {
+        List quote() {
+            get();  // skip '\''
+            return List.of(Symbol.QUOTE, read());
+        }
+
+        Expr read() {
             spaces();
             int start = current;
             if (ch == -1)
                 return null;
             else if (ch == '(')
                 return list ();
+            else if (ch == '\'')
+                return quote();
             else if (ch == '-')
                 return isDigit(get()) ? integer(start) : Symbol.of("-");
             else if (isDigit(ch))
@@ -191,7 +204,7 @@ public class TestLisp {
     public static java.util.List<Expr> parse(String source) {
         Parser parser = new Parser(source);
         java.util.List<Expr> result = new ArrayList<>();
-        for (Expr e = parser.parse(); e != null; e = parser.parse())
+        for (Expr e = parser.read(); e != null; e = parser.read())
             result.add(e);
         return result;
     }
