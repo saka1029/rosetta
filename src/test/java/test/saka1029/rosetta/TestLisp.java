@@ -137,7 +137,7 @@ public class TestLisp {
         List list() {
             get();  // skip '('
             java.util.List<Expr> result = new ArrayList<>();
-            for (;;) {
+            while (true) {
                 spaces();
                 if (ch == ')') {
                     get();  // skip ')'
@@ -173,18 +173,18 @@ public class TestLisp {
         Expr parse() {
             spaces();
             int start = current;
-            return switch (ch) {
-                case -1 -> null;
-                case '(' -> list ();
-                case '-' -> isDigit(get()) ? integer(start) : Symbol.of("-");
-                case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> integer(start);
-                default -> {
-                    if (isSymbolFirst(ch))
-                        yield symbol(start);
-                    else 
-                        throw new RuntimeException("Unexpected character '%c'".formatted((char)ch));
-                }
-            };
+            if (ch == -1)
+                return null;
+            else if (ch == '(')
+                return list ();
+            else if (ch == '-')
+                return isDigit(get()) ? integer(start) : Symbol.of("-");
+            else if (isDigit(ch))
+                return integer(start);
+            else if (isSymbolFirst(ch))
+                return symbol(start);
+            else 
+                throw new RuntimeException("Unexpected character '%c'".formatted((char)ch));
         }
     }
 
