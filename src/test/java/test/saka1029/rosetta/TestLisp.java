@@ -76,6 +76,10 @@ public class TestLisp {
     }
 
     public record Cons(Expr car, Expr cdr) implements List {
+        public static Cons of(Expr car, Expr cdr) {
+            return new Cons(car, cdr);
+        }
+
         @Override
         public final String toString() {
             StringBuilder sb = new StringBuilder("(");
@@ -123,7 +127,7 @@ public class TestLisp {
         }
 
         static boolean isSymbolRest(int ch) {
-            return isSymbolFirst(ch) || isDigit(ch);
+            return isSymbolFirst(ch) || isDigit(ch) || ch == '.';
         }
 
         void spaces() {
@@ -133,7 +137,7 @@ public class TestLisp {
 
         List list() {
             get();  // skip '('
-            LinkedList<Expr> result = new LinkedList<>();
+            java.util.List<Expr> result = new ArrayList<>();
             for (;;) {
                 spaces();
                 if (ch == ')') {
@@ -141,23 +145,27 @@ public class TestLisp {
                     return List.list(Nil.NIL, result);
                 } else if (ch == '.') {
                     get();  // skip '.'
-                    return List.list(parse(), result);
+                    List list = List.list(parse(), result);
+                    spaces();
+                    if (ch != ')')
+                        throw new RuntimeException("')' expected");
+                    get();  // skip ')'
+                    return list;
                 }
                 Expr e = parse();
                 if (e == null)
                     throw new RuntimeException("Unexpected EOF");
-                result.addFirst(e);
+                result.addLast(e);
             }
         }
 
-        Int integer(int start, int sign) {
+        Int integer(int start) {
             while (isDigit(ch))
                 get();
-            return new Int(sign * Integer.parseInt(new String(in, start, current - start)));
+            return new Int(Integer.parseInt(new String(in, start, current - start)));
         }
 
         Symbol symbol(int start) {
-            get();
             while (isSymbolRest(ch))
                 get();
             return Symbol.of(new String(in, start, current - start));
@@ -169,10 +177,10 @@ public class TestLisp {
             return switch (ch) {
                 case -1 -> null;
                 case '(' -> list ();
-                case '-' -> isDigit(get()) ? integer(start, -1) : Symbol.of("-");
-                case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> integer(start, 1);
+                case '-' -> isDigit(get()) ? integer(start) : Symbol.of("-");
+                case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> integer(start);
                 default -> {
-                    if (isSymbolFirst(get()))
+                    if (isSymbolFirst(ch))
                         yield symbol(start);
                     else 
                         throw new RuntimeException("Unexpected character '%c'".formatted((char)ch));
@@ -189,26 +197,63 @@ public class TestLisp {
         return result;
     }
 
+    static Symbol symbol(String value) {
+        return Symbol.of(value);
+    }
+
+    static Int integer(int value) {
+        return Int.of(value);
+    }
+
+    static List list(Expr... exprs) {
+        return List.of(exprs);
+    }
+
+    static Cons cons(Expr car, Expr cdr) {
+        return Cons.of(car, cdr);
+    }
+
+    static java.util.List<Expr> jlist(Expr... exprs) {
+        return java.util.List.of(exprs);
+    }
+
     @Test
-    public void testParseAtom() {
-        assertEquals(java.util.List.of(Symbol.of("abc")), parse("abc"));
-        assertEquals(java.util.List.of(Symbol.of("abc")), parse("abc  "));
-        assertEquals(java.util.List.of(Symbol.of("abc")), parse("   abc  "));
+    public void testParseSymbol() {
+        assertEquals(jlist(symbol("a.bc")), parse("a.bc"));
+        assertEquals(jlist(symbol("abc")), parse("abc"));
+        assertEquals(jlist(symbol("abc")), parse("abc  "));
+        assertEquals(jlist(symbol("abc")), parse("   abc  "));
+        assertEquals(jlist(symbol("#<")), parse(" #< "));
+        assertEquals(jlist(symbol("-")), parse(" - "));
+        assertEquals(jlist(symbol("**")), parse(" ** "));
     }
 
     @Test
     public void testParseInt() {
-        assertEquals(java.util.List.of(Int.of(123)), parse("123"));
-        assertEquals(java.util.List.of(Int.of(123)), parse("123  "));
-        assertEquals(java.util.List.of(Int.of(123)), parse("  123  "));
+        assertEquals(jlist(integer(123)), parse("123"));
+        assertEquals(jlist(integer(123)), parse("123  "));
+        assertEquals(jlist(integer(123)), parse("  123  "));
+        assertEquals(jlist(integer(-123)), parse("-123"));
+        assertEquals(jlist(integer(-123)), parse("-123  "));
+        assertEquals(jlist(integer(-123)), parse("  -123  "));
     }
 
     @Test
     public void testParseList() {
-        assertEquals(java.util.List.of(List.of(new Int(123))), parse("(123)"));
-        assertEquals(java.util.List.of(List.of(new Int(123))), parse("(123  )"));
-        assertEquals(java.util.List.of(List.of(new Int(123))), parse("(   123   )"));
-        assertEquals(java.util.List.of(List.of(new Int(123))), parse("   (   123   )"));
-        assertEquals(java.util.List.of(List.of(new Int(123))), parse("   (   123   )   "));
+        assertEquals(jlist(list(integer(123))), parse("(123)"));
+        assertEquals(jlist(list(integer(123))), parse("(123  )"));
+        assertEquals(jlist(list(integer(123))), parse("(   123   )"));
+        assertEquals(jlist(list(integer(123))), parse("   (   123   )"));
+        assertEquals(jlist(list(integer(123))), parse("   (   123   )   "));
+        assertEquals(jlist(list(list(symbol("a")))), parse("((a))"));
+    }
+
+    @Test
+    public void testParseDotPair() {
+        assertEquals(jlist(cons(symbol("a"), symbol("b"))), parse("(a . b)"));
+        assertEquals(jlist(cons(symbol("a"), symbol("b"))), parse("(a .b)"));
+        assertEquals(jlist(list(symbol("a."), symbol("b"))), parse("(a. b)"));
+        assertEquals(jlist(list(symbol("a.b"))), parse("(a.b)"));
+        assertEquals(jlist(cons(symbol("a"), list(symbol("b")))), parse("(a .(b))"));
     }
 }
