@@ -189,11 +189,11 @@ public class Lisp {
         }
     }
 
-    public static java.util.List<Expr> parse(String source) {
+    public static List parse(String source) {
         Parser parser = new Parser(source);
         java.util.List<Expr> result = new ArrayList<>();
         for (Expr e = parser.read(); e != null; e = parser.read())
             result.add(e);
-        return result;
+        return List.list(List.NIL, result);
     }
 }
