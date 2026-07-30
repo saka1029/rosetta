@@ -7,6 +7,8 @@ import java.util.Objects;
 
 public class Lisp {
 
+    private Lisp() {}
+
     public interface Expr {}
 
     public interface Atom extends Expr {}

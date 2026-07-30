@@ -1,6 +1,7 @@
 package test.saka1029.rosetta;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
@@ -29,18 +30,19 @@ public class TestLisp {
     }
 
     @Test
-    public void testParseSymbol() {
+    public void testReadSymbol() {
         assertEquals(jlist(symbol("a.bc")), parse("a.bc"));
         assertEquals(jlist(symbol("abc")), parse("abc"));
         assertEquals(jlist(symbol("abc")), parse("abc  "));
         assertEquals(jlist(symbol("abc")), parse("   abc  "));
+        assertEquals(jlist(symbol("abc12")), parse("   abc12  "));
         assertEquals(jlist(symbol("#<")), parse(" #< "));
         assertEquals(jlist(symbol("-")), parse(" - "));
         assertEquals(jlist(symbol("**")), parse(" ** "));
     }
 
     @Test
-    public void testParseInt() {
+    public void testReadInt() {
         assertEquals(jlist(integer(123)), parse("123"));
         assertEquals(jlist(integer(123)), parse("123  "));
         assertEquals(jlist(integer(123)), parse("  123  "));
@@ -51,7 +53,7 @@ public class TestLisp {
     }
 
     @Test
-    public void testParseList() {
+    public void testReadList() {
         assertEquals(jlist(list()), parse(" ( ) "));
         assertEquals(jlist(list(integer(123))), parse("(123)"));
         assertEquals(jlist(list(integer(123))), parse("(123  )"));
@@ -62,7 +64,7 @@ public class TestLisp {
     }
 
     @Test
-    public void testParseDotPair() {
+    public void testReadDotPair() {
         assertEquals(jlist(cons(symbol("a"), symbol("b"))), parse("(a . b)"));
         assertEquals(jlist(cons(symbol("a"), symbol("b"))), parse("(a .b)"));
         assertEquals(jlist(list(symbol("a."), symbol("b"))), parse("(a. b)"));
@@ -86,5 +88,36 @@ public class TestLisp {
         assertEquals("(quote . cdr)", parse("(quote . cdr)").get(0).toString());
         assertEquals("(quote a . b)", parse("(quote a . b)").get(0).toString());
         assertEquals("(quote)", parse("(quote)").get(0).toString());
+    }
+
+    @Test
+    public void testListException() {
+        try {
+            List.list(symbol("abc"));
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertEquals("exprs", e.getMessage());
+        }
+        try {
+            parse("(a b");
+            fail();
+        } catch (RuntimeException e) {
+            assertEquals("Unexpected EOF", e.getMessage());
+        }
+        try {
+            parse(")a b");
+            fail();
+        } catch (RuntimeException e) {
+            assertEquals("Unexpected character ')'", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testDotPairException() {
+        try {
+            parse("(a b . a b)");
+        } catch (RuntimeException e) {
+            assertEquals("')' expected", e.getMessage());
+        }
     }
 }
