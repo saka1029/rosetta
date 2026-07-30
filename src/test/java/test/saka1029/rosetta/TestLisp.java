@@ -91,18 +91,11 @@ public class TestLisp {
                 return "'" + ccdr.car;
             StringBuilder sb = new StringBuilder("(");
             sb.append(car);
-            Expr e = cdr;
-            while (true) {
-                if (e == Nil.NIL) {
-                    break;
-                } else if (e instanceof Cons cons) {
-                    sb.append(" ").append(cons.car);
-                    e = cons.cdr;
-                } else { // dot pair
-                    sb.append(" . ").append(e);
-                    break;
-                }
-            }
+            Expr e;
+            for (e = cdr; e instanceof Cons cons; e = cons.cdr)
+                sb.append(" ").append(cons.car);
+            if (e != Nil.NIL)
+                sb.append(" . ").append(e);
             return sb.append(")").toString();
         }
     }
@@ -280,6 +273,8 @@ public class TestLisp {
         assertEquals("'a", parse("'a").get(0).toString());
         assertEquals("'(a b)", parse("'(a b)").get(0).toString());
         assertEquals("'(a b)", parse("(quote (a b))").get(0).toString());
+        assertEquals("'quote", parse("(quote quote)").get(0).toString());
+        assertEquals("'(quote)", parse("(quote (quote))").get(0).toString());
         assertEquals("(quote . cdr)", parse("(quote . cdr)").get(0).toString());
         assertEquals("(quote a . b)", parse("(quote a . b)").get(0).toString());
         assertEquals("(quote)", parse("(quote)").get(0).toString());
