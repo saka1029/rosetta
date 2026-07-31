@@ -107,8 +107,12 @@ public class Lisp {
             this.ch = get();
         }
 
+        public static Reader of(java.io.Reader reader) {
+            return new Reader(reader);
+        }
+
         public static Reader of(String source) {
-            return new Reader(new StringReader(source));
+            return Reader.of(new StringReader(source));
         }
 
         int get() {
@@ -150,7 +154,7 @@ public class Lisp {
                     return result;
                 }
                 Expr e = read();
-                if (e == null)
+                if (e == EOF)
                     throw new RuntimeException("Unexpected EOF");
                 list.addLast(e);
             }
@@ -205,109 +209,5 @@ public class Lisp {
             else 
                 throw new RuntimeException("Unexpected character '%c'".formatted((char)ch));
         }
-    }
-
-    public static class Parser {
-        final int[] in;
-        int next, current, ch;
-
-        Parser(String source) {
-            this.in = source.codePoints().toArray();
-            this.next = this.current = 0;
-            this.ch = get();
-        }
-
-        int get() {
-            current = next;
-            return ch = next < in.length ? in[next++] : -1;
-        }
-
-        static boolean isDigit(int ch) {
-            return ch >= '0' && ch <= '9';
-        }
-
-        static boolean isSymbolFirst(int ch) {
-            return switch (ch) {
-                case -1, '(', ')', '.' -> false;
-                default -> !Character.isWhitespace(ch) && !isDigit(ch);
-            };
-        }
-
-        static boolean isSymbolRest(int ch) {
-            return isSymbolFirst(ch) || isDigit(ch) || ch == '.';
-        }
-
-        void spaces() {
-            while (Character.isWhitespace(ch))
-                get();
-        }
-
-        List list() {
-            get();  // skip '('
-            java.util.List<Expr> result = new ArrayList<>();
-            while (true) {
-                spaces();
-                if (ch == ')') {
-                    get();  // skip ')'
-                    return List.list(List.NIL, result);
-                } else if (ch == '.') {
-                    get();  // skip '.'
-                    List list = List.list(read(), result);
-                    spaces();
-                    if (ch != ')')
-                        throw new RuntimeException("')' expected");
-                    get();  // skip ')'
-                    return list;
-                }
-                Expr e = read();
-                if (e == null)
-                    throw new RuntimeException("Unexpected EOF");
-                result.addLast(e);
-            }
-        }
-
-        Int integer(int start) {
-            while (isDigit(ch))
-                get();
-            return Int.of(Integer.parseInt(new String(in, start, current - start)));
-        }
-
-        Symbol symbol(int start) {
-            while (isSymbolRest(ch))
-                get();
-            return Symbol.of(new String(in, start, current - start));
-        }
-
-        List quote() {
-            get();  // skip '\''
-            return List.of(Symbol.QUOTE, read());
-        }
-
-        Expr read() {
-            spaces();
-            int start = current;
-            if (ch == -1)
-                return null;
-            else if (ch == '(')
-                return list ();
-            else if (ch == '\'')
-                return quote();
-            else if (ch == '-')
-                return isDigit(get()) ? integer(start) : Symbol.of("-");
-            else if (isDigit(ch))
-                return integer(start);
-            else if (isSymbolFirst(ch))
-                return symbol(start);
-            else 
-                throw new RuntimeException("Unexpected character '%c'".formatted((char)ch));
-        }
-    }
-
-    public static List parse(String source) {
-        Parser parser = new Parser(source);
-        java.util.List<Expr> result = new ArrayList<>();
-        for (Expr e = parser.read(); e != null; e = parser.read())
-            result.add(e);
-        return List.list(List.NIL, result);
     }
 }

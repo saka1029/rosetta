@@ -25,73 +25,71 @@ public class TestLisp {
         return Cons.of(car, cdr);
     }
 
-    static java.util.List<Expr> jlist(Expr... exprs) {
-        return java.util.List.of(exprs);
-    }
-
-    static Expr parseFirst(String s) {
-        return ((Cons)parse(s)).car();
+    static Expr read(String source) {
+        return Reader.of(source).read();
     }
 
     @Test
     public void testReadSymbol() {
-        assertEquals(symbol("a.bc"), parseFirst("a.bc"));
-        assertEquals(symbol("abc"), parseFirst("abc"));
-        assertEquals(symbol("abc"), parseFirst("abc  "));
-        assertEquals(symbol("abc"), parseFirst("   abc  "));
-        assertEquals(symbol("abc12"), parseFirst("   abc12  "));
-        assertEquals(symbol("#<"), parseFirst(" #< "));
-        assertEquals(symbol("-"), parseFirst(" - "));
-        assertEquals(symbol("**"), parseFirst(" ** "));
+        assertEquals(symbol("a.bc"), read("a.bc"));
+        assertEquals(symbol("abc"), read("abc"));
+        assertEquals(symbol("abc"), read("abc  "));
+        assertEquals(symbol("abc"), read("   abc  "));
+        assertEquals(symbol("abc12"), read("   abc12  "));
+        assertEquals(symbol("#<"), read(" #< "));
+        assertEquals(symbol("-"), read(" - "));
+        assertEquals(symbol("**"), read(" ** "));
     }
 
     @Test
     public void testReadInt() {
-        assertEquals(integer(123), parseFirst("123"));
-        assertEquals(integer(123), parseFirst("123  "));
-        assertEquals(integer(123), parseFirst("  123  "));
-        assertEquals(integer(-123), parseFirst("-123"));
-        assertEquals(integer(-123), parseFirst("-123  "));
-        assertEquals(integer(-123), parseFirst("  -123  "));
-        assertEquals(list(symbol("-"), integer(123)), parse("  -  123  "));
+        assertEquals(integer(123), read("123"));
+        assertEquals(integer(123), read("123  "));
+        assertEquals(integer(123), read("  123  "));
+        assertEquals(integer(-123), read("-123"));
+        assertEquals(integer(-123), read("-123  "));
+        assertEquals(integer(-123), read("  -123  "));
+        Reader reader = Reader.of("   -   123  ");
+        assertEquals(symbol("-"), reader.read());
+        assertEquals(integer(123), reader.read());
     }
 
     @Test
     public void testReadList() {
-        assertEquals(List.NIL, parseFirst(" ( ) "));
-        assertEquals(list(integer(123)), parseFirst("(123)"));
-        assertEquals(list(integer(123)), parseFirst("(123  )"));
-        assertEquals(list(integer(123)), parseFirst("(   123   )"));
-        assertEquals(list(integer(123)), parseFirst("   (   123   )"));
-        assertEquals(list(integer(123)), parseFirst("   (   123   )   "));
-        assertEquals(list(list(symbol("a"))), parseFirst("((a))"));
+        assertEquals(List.NIL, read(" ( ) "));
+        assertEquals(list(integer(123)), read("(123)"));
+        assertEquals(list(integer(123)), read("(123  )"));
+        assertEquals(list(integer(123)), read("(   123   )"));
+        assertEquals(list(integer(123)), read("   (   123   )"));
+        assertEquals(list(integer(123)), read("   (   123   )   "));
+        assertEquals(list(list(symbol("a"))), read("((a))"));
     }
 
     @Test
     public void testReadDotPair() {
-        assertEquals(cons(symbol("a"), symbol("b")), parseFirst("(a . b)"));
-        assertEquals(cons(symbol("a"), symbol("b")), parseFirst("(a .b)"));
-        assertEquals(list(symbol("a."), symbol("b")), parseFirst("(a. b)"));
-        assertEquals(list(symbol("a.b")), parseFirst("(a.b)"));
-        assertEquals(cons(symbol("a"), list(symbol("b"))), parseFirst("(a .(b))"));
+        assertEquals(cons(symbol("a"), symbol("b")), read("(a . b)"));
+        assertEquals(cons(symbol("a"), symbol("b")), read("(a .b)"));
+        assertEquals(list(symbol("a."), symbol("b")), read("(a. b)"));
+        assertEquals(list(symbol("a.b")), read("(a.b)"));
+        assertEquals(cons(symbol("a"), list(symbol("b"))), read("(a .(b))"));
     }
 
     @Test
     public void testToString() {
-        assertEquals("12345", parseFirst("  12345").toString());
-        assertEquals("abc.def", parseFirst("  abc.def").toString());
-        assertEquals("()", parseFirst("()").toString());
-        assertEquals("(a b)", parseFirst("(a b)").toString());
-        assertEquals("(1 2 3)", parseFirst("(1 2 3)").toString());
-        assertEquals("(a . b)", parseFirst("(a . b)").toString());
-        assertEquals("'a", parseFirst("'a").toString());
-        assertEquals("'(a b)", parseFirst("'(a b)").toString());
-        assertEquals("'(a b)", parseFirst("(quote (a b))").toString());
-        assertEquals("'quote", parseFirst("(quote quote)").toString());
-        assertEquals("'(quote)", parseFirst("(quote (quote))").toString());
-        assertEquals("(quote . cdr)", parseFirst("(quote . cdr)").toString());
-        assertEquals("(quote a . b)", parseFirst("(quote a . b)").toString());
-        assertEquals("(quote)", parseFirst("(quote)").toString());
+        assertEquals("12345", read("  12345").toString());
+        assertEquals("abc.def", read("  abc.def").toString());
+        assertEquals("()", read("()").toString());
+        assertEquals("(a b)", read("(a b)").toString());
+        assertEquals("(1 2 3)", read("(1 2 3)").toString());
+        assertEquals("(a . b)", read("(a . b)").toString());
+        assertEquals("'a", read("'a").toString());
+        assertEquals("'(a b)", read("'(a b)").toString());
+        assertEquals("'(a b)", read("(quote (a b))").toString());
+        assertEquals("'quote", read("(quote quote)").toString());
+        assertEquals("'(quote)", read("(quote (quote))").toString());
+        assertEquals("(quote . cdr)", read("(quote . cdr)").toString());
+        assertEquals("(quote a . b)", read("(quote a . b)").toString());
+        assertEquals("(quote)", read("(quote)").toString());
     }
 
     @Test
@@ -103,13 +101,13 @@ public class TestLisp {
             assertEquals("exprs", e.getMessage());
         }
         try {
-            parseFirst("(a b");
+            read("(a b");
             fail();
         } catch (RuntimeException e) {
             assertEquals("Unexpected EOF", e.getMessage());
         }
         try {
-            parseFirst(")a b");
+            read(")a b");
             fail();
         } catch (RuntimeException e) {
             assertEquals("Unexpected character ')'", e.getMessage());
@@ -142,36 +140,18 @@ public class TestLisp {
     @Test
     public void testDotPairException() {
         try {
-            parseFirst("(a b . a b)");
+            read("(a b . a b)");
         } catch (RuntimeException e) {
             assertEquals("')' expected", e.getMessage());
         }
     }
 
-    static Expr read(String source) {
-        return Reader.of(source).read();
-    }
-
     @Test
-    public void testReaderSymbol() {
-        assertEquals(symbol("a.bc"), read("a.bc"));
-        assertEquals(symbol("abc"), read("abc"));
-        assertEquals(symbol("abc"), read("abc  "));
-        assertEquals(symbol("abc"), read("   abc  "));
-        assertEquals(symbol("abc12"), read("   abc12  "));
-        assertEquals(symbol("#<"), read(" #< "));
-        assertEquals(symbol("-"), read(" - "));
-        assertEquals(symbol("**"), read(" ** "));
-    }
-
-    @Test
-    public void testReaderList() {
-        assertEquals(List.NIL, read(" ( ) "));
-        assertEquals(list(integer(123)), read("(123)"));
-        assertEquals(list(integer(123)), read("(123  )"));
-        assertEquals(list(integer(123)), read("(   123   )"));
-        assertEquals(list(integer(123)), read("   (   123   )"));
-        assertEquals(list(integer(123)), read("   (   123   )   "));
-        assertEquals(list(list(symbol("a"))), read("((a))"));
+    public void testReader() {
+        Reader reader = Reader.of("(a b)(c d)123");
+        assertEquals(list(symbol("a"), symbol("b")), reader.read());
+        assertEquals(list(symbol("c"), symbol("d")), reader.read());
+        assertEquals(integer(123), reader.read());
+        assertEquals(Reader.EOF, reader.read());
     }
 }
