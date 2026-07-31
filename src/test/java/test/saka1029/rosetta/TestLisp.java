@@ -15,8 +15,6 @@ import saka1029.rosetta.Lisp.Procedure;
 import saka1029.rosetta.Lisp.Reader;
 import saka1029.rosetta.Lisp.Symbol;
 
-import static saka1029.rosetta.Lisp.*;
-
 public class TestLisp {
 
     static Symbol symbol(String value) {
@@ -172,9 +170,9 @@ public class TestLisp {
     @Test
     public void testEval() {
         Env env = Env.of();
-        env.define(Symbol.QUOTE, (Applicable)(args, e) -> cons(args).car());
-        env.define(symbol("car"), (Procedure)args -> cons(cons(args).car()).car());
-        env.define(symbol("cdr"), (Procedure)args -> cons(cons(args).car()).cdr());
+        env.define(Symbol.QUOTE, (Applicable)(args, e) -> args.car());
+        env.define(symbol("car"), (Procedure)args -> cons(args.car()).car());
+        env.define(symbol("cdr"), (Procedure)args -> cons(args.car()).cdr());
         assertEquals(list(symbol("a"), symbol("b")), read("'(a b)").eval(env));
         assertEquals(symbol("a"), read("(car '(a b c))").eval(env));
         assertEquals(list(symbol("b"), symbol("c")), read("(cdr '(a b c))").eval(env));

@@ -58,7 +58,7 @@ public class Lisp {
         default Expr eval(Env env) {
             return this;
         }
-        default Expr apply(Expr args, Env env) {
+        default Expr apply(List args, Env env) {
             throw new RuntimeException("Cannot apply " + args + " to " + this);
         }
     }
@@ -103,6 +103,8 @@ public class Lisp {
     }
 
     public interface List extends Expr {
+        default Expr car() { throw new RuntimeException("can't car"); }
+        default Expr cdr() { throw new RuntimeException("can't cdr"); }
         public static List NIL = new List() {
             @Override
             public String toString() {
@@ -137,7 +139,7 @@ public class Lisp {
 
         @Override
         public Expr eval(Env env) {
-            return car.eval(env).apply(cdr, env);
+            return car.eval(env).apply((List)cdr, env);
         }
 
         @Override
@@ -272,21 +274,21 @@ public class Lisp {
     }
 
     public interface Applicable extends Expr {
-        Expr apply(Expr args, Env env);
+        Expr apply(List args, Env env);
     }
 
     public interface Procedure extends Atom,  Applicable {
 
-        Expr apply(Expr args);
+        Expr apply(List args);
         
-        static Expr evlis(Expr args, Env env) {
+        static List evlis(Expr args, Env env) {
             return args instanceof Cons c
                 ? new Cons(c.car().eval(env), evlis(c.cdr(), env))
                 : List.NIL;
         }
 
         @Override
-        default Expr apply(Expr args, Env env) {
+        default Expr apply(List args, Env env) {
             return apply(evlis(args, env));
         }
     }
