@@ -147,4 +147,31 @@ public class TestLisp {
             assertEquals("')' expected", e.getMessage());
         }
     }
+
+    static Expr read(String source) {
+        return Reader.of(source).read();
+    }
+
+    @Test
+    public void testReaderSymbol() {
+        assertEquals(symbol("a.bc"), read("a.bc"));
+        assertEquals(symbol("abc"), read("abc"));
+        assertEquals(symbol("abc"), read("abc  "));
+        assertEquals(symbol("abc"), read("   abc  "));
+        assertEquals(symbol("abc12"), read("   abc12  "));
+        assertEquals(symbol("#<"), read(" #< "));
+        assertEquals(symbol("-"), read(" - "));
+        assertEquals(symbol("**"), read(" ** "));
+    }
+
+    @Test
+    public void testReaderList() {
+        assertEquals(List.NIL, read(" ( ) "));
+        assertEquals(list(integer(123)), read("(123)"));
+        assertEquals(list(integer(123)), read("(123  )"));
+        assertEquals(list(integer(123)), read("(   123   )"));
+        assertEquals(list(integer(123)), read("   (   123   )"));
+        assertEquals(list(integer(123)), read("   (   123   )   "));
+        assertEquals(list(list(symbol("a"))), read("((a))"));
+    }
 }
