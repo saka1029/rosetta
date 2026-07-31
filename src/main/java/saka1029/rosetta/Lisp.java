@@ -11,7 +11,57 @@ public class Lisp {
 
     private Lisp() {}
 
-    public interface Expr {}
+    public static class Env {
+        private final Map<Symbol, Expr> map = new HashMap<>();
+        private final Env next;
+        
+        Env(Env next) {
+            this.next = next;
+        }
+
+        public static Env of(Env next) {
+            return new Env(next);
+        }
+
+        public static Env of() {
+            return new Env(null);
+        }
+        
+        private static Env find(Env env, Symbol key) {
+            for (Env e = env; e != null; e = e.next)
+                if (e.map.containsKey(key))
+                    return e;
+            throw new RuntimeException("Variable " + key + " not found");
+        }
+        
+        public Expr get(Symbol key) {
+            return find(this, key).map.get(key);
+        }
+        
+        public Expr set(Symbol key, Expr value) {
+            find(this, key).map.put(key, value);
+            return value;
+        }
+
+        public Expr define(Symbol key, Expr value) {
+            map.put(key, value);
+            return value;
+        }
+        
+        @Override
+        public String toString() {
+            return map.toString() + (next != null ? " -> " + next : "");
+        }
+    }
+
+    public interface Expr {
+        default Expr eval(Env env) {
+            return this;
+        }
+        default Expr apply(Expr args, Env env) {
+            throw new RuntimeException("Cannot apply " + args + " to " + this);
+        }
+    }
 
     public interface Atom extends Expr {}
 
@@ -39,6 +89,11 @@ public class Lisp {
 
         public static Symbol of(String value) {
             return all.computeIfAbsent(value, k -> new Symbol(value));
+        }
+
+        @Override
+        public Expr eval(Env env) {
+            return env.get(this);
         }
 
         @Override
@@ -78,6 +133,11 @@ public class Lisp {
             Objects.requireNonNull(car, "car");
             Objects.requireNonNull(cdr, "cdr");
             return new Cons(car, cdr);
+        }
+
+        @Override
+        public Expr eval(Env env) {
+            return car.eval(env).apply(cdr, env);
         }
 
         @Override
@@ -208,6 +268,26 @@ public class Lisp {
                 return symbol();
             else 
                 throw new RuntimeException("Unexpected character '%c'".formatted((char)ch));
+        }
+    }
+
+    public interface Applicable extends Expr {
+        Expr apply(Expr args, Env env);
+    }
+
+    public interface Procedure extends Atom,  Applicable {
+
+        Expr apply(Expr args);
+        
+        static Expr evlis(Expr args, Env env) {
+            return args instanceof Cons c
+                ? new Cons(c.car().eval(env), evlis(c.cdr(), env))
+                : List.NIL;
+        }
+
+        @Override
+        default Expr apply(Expr args, Env env) {
+            return apply(evlis(args, env));
         }
     }
 }

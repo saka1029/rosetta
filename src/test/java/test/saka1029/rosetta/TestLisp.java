@@ -5,6 +5,16 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
+import saka1029.rosetta.Lisp.Applicable;
+import saka1029.rosetta.Lisp.Cons;
+import saka1029.rosetta.Lisp.Env;
+import saka1029.rosetta.Lisp.Expr;
+import saka1029.rosetta.Lisp.Int;
+import saka1029.rosetta.Lisp.List;
+import saka1029.rosetta.Lisp.Procedure;
+import saka1029.rosetta.Lisp.Reader;
+import saka1029.rosetta.Lisp.Symbol;
+
 import static saka1029.rosetta.Lisp.*;
 
 public class TestLisp {
@@ -153,5 +163,20 @@ public class TestLisp {
         assertEquals(list(symbol("c"), symbol("d")), reader.read());
         assertEquals(integer(123), reader.read());
         assertEquals(Reader.EOF, reader.read());
+    }
+
+    static Cons cons(Expr e) {
+        return (Cons)e;
+    }
+
+    @Test
+    public void testEval() {
+        Env env = Env.of();
+        env.define(Symbol.QUOTE, (Applicable)(args, e) -> cons(args).car());
+        env.define(symbol("car"), (Procedure)args -> cons(cons(args).car()).car());
+        env.define(symbol("cdr"), (Procedure)args -> cons(cons(args).car()).cdr());
+        assertEquals(list(symbol("a"), symbol("b")), read("'(a b)").eval(env));
+        assertEquals(symbol("a"), read("(car '(a b c))").eval(env));
+        assertEquals(list(symbol("b"), symbol("c")), read("(cdr '(a b c))").eval(env));
     }
 }
