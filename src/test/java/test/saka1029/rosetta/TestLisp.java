@@ -6,6 +6,7 @@ import static org.junit.Assert.fail;
 import org.junit.Test;
 
 import saka1029.rosetta.Lisp.Applicable;
+import saka1029.rosetta.Lisp.Closure;
 import saka1029.rosetta.Lisp.Cons;
 import saka1029.rosetta.Lisp.Env;
 import saka1029.rosetta.Lisp.Expr;
@@ -170,11 +171,13 @@ public class TestLisp {
     @Test
     public void testEval() {
         Env env = Env.of();
-        env.define(Symbol.QUOTE, (Applicable)(args, e) -> args.car());
-        env.define(symbol("car"), (Procedure)args -> cons(args.car()).car());
-        env.define(symbol("cdr"), (Procedure)args -> cons(args.car()).cdr());
+        env.define(Symbol.QUOTE, (Applicable) (args, e) -> args.car());
+        env.define(symbol("lambda"), (Applicable) (args, e) -> Closure.of(args.car(), args.cdr(), e));
+        env.define(symbol("car"), (Procedure) args -> cons(args.car()).car());
+        env.define(symbol("cdr"), (Procedure) args -> cons(args.car()).cdr());
         assertEquals(list(symbol("a"), symbol("b")), read("'(a b)").eval(env));
         assertEquals(symbol("a"), read("(car '(a b c))").eval(env));
         assertEquals(list(symbol("b"), symbol("c")), read("(cdr '(a b c))").eval(env));
+        assertEquals(symbol("a"), read("((lambda (x) (car x)) '(a b c))").eval(env));
     }
 }

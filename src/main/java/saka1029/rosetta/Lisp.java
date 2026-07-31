@@ -292,4 +292,48 @@ public class Lisp {
             return apply(evlis(args, env));
         }
     }
+
+    public static class Closure implements Procedure {
+        final Expr parms, body;
+        final Env env;
+
+        Closure(Expr parms, Expr body, Env env) {
+            this.parms = parms;
+            this.body = body;
+            this.env = env;
+        }
+
+        public static Closure of(Expr parms, Expr body, Env env) {
+            return new Closure(parms, body, env);
+        }
+
+        static void pairlis(Expr parms, List args, Env env) {
+            for (; parms instanceof Cons p; parms = p.cdr(), args = (List)args.cdr())
+                env.define((Symbol)p.car(), args.car());
+            if (parms != List.NIL)
+                env.define((Symbol)parms, args);
+        }
+
+        static Expr progn(Expr body, Env env) {
+            if (!(body instanceof Cons b))
+                return body.eval(env);
+            if (b.cdr() == List.NIL)
+                return b.car().eval(env);
+            b.car().eval(env);
+            return progn(b.cdr(), env);
+        }
+
+        @Override
+        public Expr apply(List args) {
+            Env e = Env.of(env);
+            pairlis(parms, args, e);
+            return progn(body, e);
+        }
+
+        @Override
+        public String toString() {
+            return Cons.of(Symbol.of("closure"), Cons.of(parms, body)).toString();
+        }
+
+    }
 }
