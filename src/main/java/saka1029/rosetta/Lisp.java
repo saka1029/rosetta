@@ -128,6 +128,21 @@ public class Lisp {
         public static List list(Expr end, java.util.List<Expr> list) {
             return list(end, list.toArray(Expr[]::new));
         }
+
+        default int size() {
+            int size = 0;
+            for (Expr e = this; e instanceof Cons c; e = c.cdr)
+                ++size;
+            return size;
+        }
+
+        default Expr at(int index) {
+            int i = 0;
+            for (Expr e = this; e instanceof Cons c; e = c.cdr, ++i)
+                if (i == index)
+                    return c.car;
+            throw new IndexOutOfBoundsException("index");
+        }
     }
 
     public record Cons(Expr car, Expr cdr) implements List {

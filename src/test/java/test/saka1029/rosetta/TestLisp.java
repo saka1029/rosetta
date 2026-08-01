@@ -164,6 +164,27 @@ public class TestLisp {
         assertEquals(Reader.EOF, reader.read());
     }
 
+    @Test
+    public void testListSize() {
+        assertEquals(2, list(symbol("a"), symbol("b")).size());
+        assertEquals(2, list(symbol("a"), list(symbol("b"))).size());
+        assertEquals(2, cons(symbol("a"), cons(symbol("b"), List.NIL)).size());
+    }
+
+    @Test
+    public void testListAt() {
+        assertEquals(symbol("a"), list(symbol("a"), symbol("b")).at(0));
+        assertEquals(symbol("b"), list(symbol("a"), symbol("b")).at(1));
+        try {
+            list(symbol("a"), symbol("b")).at(2);
+            fail();
+        } catch (IndexOutOfBoundsException e) {
+            assertEquals("index", e.getMessage());
+        }
+        assertEquals(symbol("a"), cons(symbol("a"), cons(symbol("b"), List.NIL)).at(0));
+        assertEquals(symbol("b"), cons(symbol("a"), cons(symbol("b"), List.NIL)).at(1));
+    }
+
     static Cons cons(Expr e) {
         return (Cons)e;
     }
