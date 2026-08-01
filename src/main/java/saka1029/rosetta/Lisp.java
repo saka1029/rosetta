@@ -3,9 +3,15 @@ package saka1029.rosetta;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class Lisp {
 
@@ -117,11 +123,15 @@ public class Lisp {
         }
     }
 
-    public interface List extends Expr {
+    public interface List extends Expr, Iterable<Expr> {
         public static List NIL = new List() {
             @Override
             public String toString() {
                 return "()";
+            }
+            @Override
+            public Iterator<Expr> iterator() {
+                return Collections.emptyIterator();
             }
         };
 
@@ -155,6 +165,32 @@ public class Lisp {
                 if (i == index)
                     return c.car;
             throw new IndexOutOfBoundsException("index");
+        }
+
+        @Override
+        default Iterator<Expr> iterator() {
+            return new Iterator<Lisp.Expr>() {
+                Expr e = List.this;
+
+                @Override
+                public boolean hasNext() {
+                    return e instanceof Cons;
+                }
+
+                @Override
+                public Expr next() {
+                    if (e instanceof Cons c) {
+                        Expr result = c.car;
+                        e = c.cdr;
+                        return result;
+                    } else
+                        throw new NoSuchElementException();
+                }
+            };
+        }
+
+        default Stream<Expr> stream() {
+            return StreamSupport.stream(spliterator(), false);
         }
     }
 
