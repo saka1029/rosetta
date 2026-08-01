@@ -61,11 +61,12 @@ public class Lisp {
         default Expr apply(List args, Env env) {
             throw new RuntimeException("Cannot apply " + args + " to " + this);
         }
-        default <T> T as(Class<T> t) {
+        default <T extends Expr> T as(Class<T> t) {
             if (t.isInstance(this))
                 return t.cast(this);
             else
-                throw new ClassCastException("Can't cast to " + t.getSimpleName());
+                throw new ClassCastException(
+                    "Can't cast '%s' as %s".formatted(this, t.getSimpleName()));
         }
 
         default Cons asCons() {

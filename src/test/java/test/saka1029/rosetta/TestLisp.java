@@ -165,6 +165,24 @@ public class TestLisp {
     }
 
     @Test
+    public void testExprAs() {
+        assertEquals(symbol("a"), symbol("a").as(Symbol.class));
+        try {
+            list(symbol("a")).as(Symbol.class);
+            fail();
+        } catch (ClassCastException e) {
+            assertEquals("Can't cast '(a)' as Symbol", e.getMessage());
+        }
+        assertEquals(cons(symbol("a"), List.NIL), list(symbol("a")).asCons());
+        try {
+            symbol("a").asCons();
+            fail();
+        } catch (ClassCastException e) {
+            assertEquals("Can't cast 'a' as Cons", e.getMessage());
+        }
+    }
+
+    @Test
     public void testListSize() {
         assertEquals(2, list(symbol("a"), symbol("b")).size());
         assertEquals(2, list(symbol("a"), list(symbol("b"))).size());
