@@ -61,6 +61,16 @@ public class Lisp {
         default Expr apply(List args, Env env) {
             throw new RuntimeException("Cannot apply " + args + " to " + this);
         }
+        default <T> T as(Class<T> t) {
+            if (t.isInstance(this))
+                return t.cast(this);
+            else
+                throw new ClassCastException("Can't cast to " + t.getSimpleName());
+        }
+
+        default Cons asCons() {
+            return as(Cons.class);
+        }
     }
 
     public interface Atom extends Expr {}
@@ -103,8 +113,6 @@ public class Lisp {
     }
 
     public interface List extends Expr {
-        default Expr car() { throw new RuntimeException("can't car"); }
-        default Expr cdr() { throw new RuntimeException("can't cdr"); }
         public static List NIL = new List() {
             @Override
             public String toString() {
@@ -323,8 +331,8 @@ public class Lisp {
         }
 
         static void pairlis(Expr parms, List args, Env env) {
-            for (; parms instanceof Cons p; parms = p.cdr(), args = (List)args.cdr())
-                env.define((Symbol)p.car(), args.car());
+            for (; parms instanceof Cons p; parms = p.cdr(), args = (List)args.asCons().cdr())
+                env.define((Symbol)p.car(), args.asCons().car());
             if (parms != List.NIL)
                 env.define((Symbol)parms, args);
         }

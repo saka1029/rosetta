@@ -185,17 +185,13 @@ public class TestLisp {
         assertEquals(symbol("b"), cons(symbol("a"), cons(symbol("b"), List.NIL)).at(1));
     }
 
-    static Cons cons(Expr e) {
-        return (Cons)e;
-    }
-
     @Test
     public void testEval() {
         Env env = Env.of();
-        env.define(Symbol.QUOTE, (Applicable) (args, e) -> args.car());
-        env.define(symbol("lambda"), (Applicable) (args, e) -> Closure.of(args.car(), args.cdr(), e));
-        env.define(symbol("car"), (Procedure) args -> cons(args.car()).car());
-        env.define(symbol("cdr"), (Procedure) args -> cons(args.car()).cdr());
+        env.define(Symbol.QUOTE, (Applicable) (args, e) -> args.at(0));
+        env.define(symbol("lambda"), (Applicable) (args, e) -> Closure.of(args.at(0), args.asCons().cdr(), e));
+        env.define(symbol("car"), (Procedure) args -> args.at(0).asCons().car());
+        env.define(symbol("cdr"), (Procedure) args -> args.at(0).asCons().cdr());
         assertEquals(list(symbol("a"), symbol("b")), read("'(a b)").eval(env));
         assertEquals(symbol("a"), read("(car '(a b c))").eval(env));
         assertEquals(list(symbol("b"), symbol("c")), read("(cdr '(a b c))").eval(env));
