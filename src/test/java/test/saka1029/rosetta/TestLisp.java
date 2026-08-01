@@ -211,10 +211,17 @@ public class TestLisp {
         env.define(symbol("car"), (Procedure) args -> args.at(0).asCons().car());
         env.define(symbol("cdr"), (Procedure) args -> args.at(0).asCons().cdr());
         env.define(symbol("cons"), (Procedure) args -> Cons.of(args.at(0), args.at(1)));
+        env.define(symbol("+"), (Procedure) args -> {
+            int result = 0;
+            for (int i = 0, size = args.size(); i < size; ++i)
+                result += args.at(i).asInt().value();
+            return Int.of(result);
+        });
         assertEquals(list(symbol("a"), symbol("b")), read("'(a b)").eval(env));
         assertEquals(cons(symbol("a"), symbol("b")), read("(cons 'a 'b)").eval(env));
         assertEquals(symbol("a"), read("(car '(a b c))").eval(env));
         assertEquals(list(symbol("b"), symbol("c")), read("(cdr '(a b c))").eval(env));
         assertEquals(symbol("a"), read("((lambda (x) (car x)) '(a b c))").eval(env));
+        assertEquals(Int.of(6), read("(+ 1 2 3)").eval(env));
     }
 }

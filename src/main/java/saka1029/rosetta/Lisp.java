@@ -72,6 +72,10 @@ public class Lisp {
         default Cons asCons() {
             return as(Cons.class);
         }
+
+        default Int asInt() {
+            return as(Int.class);
+        }
     }
 
     public interface Atom extends Expr {}
