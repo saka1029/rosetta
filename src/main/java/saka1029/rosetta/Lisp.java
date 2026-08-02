@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.function.IntBinaryOperator;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -78,6 +79,10 @@ public class Lisp {
             return as(Cons.class);
         }
 
+        default Bool asBool() {
+            return as(Bool.class);
+        }
+
         default Int asInt() {
             return as(Int.class);
         }
@@ -93,6 +98,26 @@ public class Lisp {
         @Override
         public final String toString() {
             return "" + value;
+        }
+    }
+
+    public static class Bool implements Atom {
+        public static Bool TRUE = new Bool(true);
+        public static Bool FALSE = new Bool(false);
+
+        public final boolean value;
+
+        Bool(boolean value) {
+            this.value = value;
+        }
+
+        public static Bool of(boolean value) {
+            return value ? TRUE : FALSE;
+        }
+
+        @Override
+        public final String toString() {
+            return value ? "true" : "false";
         }
     }
 
@@ -310,10 +335,15 @@ public class Lisp {
             return isSymbolFirst(ch) || isDigit(ch) || ch == '.';
         }
 
-        Symbol symbol() {
+        Atom symbol() {
             while (isSymbolRest(ch))
                 get();
-            return Symbol.of(buffer.substring(0, buffer.length() - 1));
+            String value = buffer.substring(0, buffer.length() - 1);
+            return switch (value) {
+                case "true" -> Bool.TRUE;
+                case "false" -> Bool.FALSE;
+                default -> Symbol.of(value);
+            };
         }
 
         public Expr read() {
@@ -398,4 +428,36 @@ public class Lisp {
         }
 
     }
+    static Int intOperator(List args, int unit, IntBinaryOperator operator) {
+        return Int.of(args.stream().mapToInt(a -> a.asInt().value()).reduce(unit, operator));
+    }
+
+    static Int intOperator2(List args, int unit, IntBinaryOperator operator) {
+        return Int.of(switch (args.size()) {
+            case 0 -> unit;
+            case 1 -> operator.applyAsInt(unit, args.at(0).asInt().value());
+            default -> args.stream().mapToInt(a -> a.asInt().value()).reduce(operator).getAsInt();
+        });
+    }
+
+    static Symbol symbol(String value) {
+        return Symbol.of(value);
+    }
+
+    public static Env ENV = Env.of();
+    static {
+        ENV.define(Symbol.QUOTE, (Applicable) (args, e) -> args.at(0));
+        ENV.define(symbol("lambda"), (Applicable) (args, e) -> Closure.of(args.at(0), args.asCons().cdr(), e));
+        ENV.define(symbol("if"), (Applicable) (args, e) -> args.at(0).eval(e).asBool().value
+             ? args.at(1).eval(e)
+             : args.size() == 3 ? args.at(2).eval(e) : List.NIL);
+        ENV.define(symbol("car"), (Procedure) args -> args.at(0).asCons().car());
+        ENV.define(symbol("cdr"), (Procedure) args -> args.at(0).asCons().cdr());
+        ENV.define(symbol("cons"), (Procedure) args -> Cons.of(args.at(0), args.at(1)));
+        ENV.define(symbol("+"), (Procedure) args -> intOperator(args, 0, (a, b) -> a + b));
+        ENV.define(symbol("-"), (Procedure) args -> intOperator2(args, 0, (a, b) -> a - b));
+        ENV.define(symbol("*"), (Procedure) args -> intOperator(args, 1, (a, b) -> a * b));
+        ENV.define(symbol("/"), (Procedure) args -> intOperator2(args, 1, (a, b) -> a / b));
+    }
+
 }
