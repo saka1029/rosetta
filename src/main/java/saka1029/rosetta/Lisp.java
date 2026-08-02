@@ -427,8 +427,16 @@ public class Lisp {
         public String toString() {
             return Cons.of(Symbol.of("closure"), Cons.of(parms, body)).toString();
         }
-
     }
+
+    static void special(Env e, String name, Applicable value) {
+        e.define(Symbol.of(name), value);
+    }
+
+    static void procedure(Env e, String name, Procedure value) {
+        e.define(Symbol.of(name), value);
+    }
+
     static Int intOperator(List args, int unit, IntBinaryOperator operator) {
         return Int.of(args.stream().mapToInt(a -> a.asInt().value()).reduce(unit, operator));
     }
@@ -438,24 +446,20 @@ public class Lisp {
         return Int.of(args.size() <= 1 ? is.reduce(unit, operator) : is.reduce(operator).getAsInt());
     }
 
-    static Symbol symbol(String value) {
-        return Symbol.of(value);
-    }
-
     public static Env ENV = Env.of();
     static {
-        ENV.define(Symbol.QUOTE, (Applicable) (args, e) -> args.at(0));
-        ENV.define(symbol("lambda"), (Applicable) (args, e) -> Closure.of(args.at(0), args.asCons().cdr(), e));
-        ENV.define(symbol("if"), (Applicable) (args, e) -> args.at(0).eval(e).asBool().value
+        special(ENV, "quote", (args, e) -> args.at(0));
+        special(ENV, "lambda", (args, e) -> Closure.of(args.at(0), args.asCons().cdr(), e));
+        special(ENV, "if", (args, e) -> args.at(0).eval(e).asBool().value
              ? args.at(1).eval(e)
              : args.size() == 3 ? args.at(2).eval(e) : List.NIL);
-        ENV.define(symbol("car"), (Procedure) args -> args.at(0).asCons().car());
-        ENV.define(symbol("cdr"), (Procedure) args -> args.at(0).asCons().cdr());
-        ENV.define(symbol("cons"), (Procedure) args -> Cons.of(args.at(0), args.at(1)));
-        ENV.define(symbol("+"), (Procedure) args -> intOperator(args, 0, (a, b) -> a + b));
-        ENV.define(symbol("-"), (Procedure) args -> intOperator2(args, 0, (a, b) -> a - b));
-        ENV.define(symbol("*"), (Procedure) args -> intOperator(args, 1, (a, b) -> a * b));
-        ENV.define(symbol("/"), (Procedure) args -> intOperator2(args, 1, (a, b) -> a / b));
+        procedure(ENV, "car", args -> args.at(0).asCons().car());
+        procedure(ENV, "cdr", args -> args.at(0).asCons().cdr());
+        procedure(ENV, "cons", args -> Cons.of(args.at(0), args.at(1)));
+        procedure(ENV, "list", args -> args);
+        procedure(ENV, "+", args -> intOperator(args, 0, (a, b) -> a + b));
+        procedure(ENV, "-", args -> intOperator2(args, 0, (a, b) -> a - b));
+        procedure(ENV, "*", args -> intOperator(args, 1, (a, b) -> a * b));
+        procedure(ENV, "/", args -> intOperator2(args, 1, (a, b) -> a / b));
     }
-
 }

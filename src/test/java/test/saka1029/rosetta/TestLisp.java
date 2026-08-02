@@ -199,9 +199,15 @@ public class TestLisp {
     public void testEval() {
         assertEquals(list(symbol("a"), symbol("b")), read("'(a b)").eval(ENV));
         assertEquals(cons(symbol("a"), symbol("b")), read("(cons 'a 'b)").eval(ENV));
+        assertEquals(Int.of(1), read("(if true 1 2)").eval(ENV));
+        assertEquals(Int.of(2), read("(if false 1 2)").eval(ENV));
+        assertEquals(List.NIL, read("(if false 1)").eval(ENV));
         assertEquals(symbol("a"), read("(car '(a b c))").eval(ENV));
         assertEquals(list(symbol("b"), symbol("c")), read("(cdr '(a b c))").eval(ENV));
         assertEquals(symbol("a"), read("((lambda (x) (car x)) '(a b c))").eval(ENV));
+        assertEquals(cons(symbol("a"), symbol("b")), read("(cons 'a 'b)").eval(ENV));
+        assertEquals(list(symbol("a")), read("(cons 'a '())").eval(ENV));
+        assertEquals(list(symbol("a"), symbol("b")), read("(list 'a 'b)").eval(ENV));
         assertEquals(Int.of(0), read("(+)").eval(ENV));
         assertEquals(Int.of(1), read("(+ 1)").eval(ENV));
         assertEquals(Int.of(10), read("(+ 1 2 3 4)").eval(ENV));
@@ -213,8 +219,5 @@ public class TestLisp {
         assertEquals(Int.of(1), read("(/ 1)").eval(ENV));
         assertEquals(Int.of(0), read("(/ 2)").eval(ENV));
         assertEquals(Int.of(5), read("(/ 40 2 4)").eval(ENV));
-        assertEquals(Int.of(1), read("(if true 1 2)").eval(ENV));
-        assertEquals(Int.of(2), read("(if false 1 2)").eval(ENV));
-        assertEquals(List.NIL, read("(if false 1)").eval(ENV));
     }
 }
