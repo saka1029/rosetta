@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -179,12 +178,11 @@ public class Lisp {
 
                 @Override
                 public Expr next() {
-                    if (e instanceof Cons c) {
-                        Expr result = c.car;
-                        e = c.cdr;
-                        return result;
-                    } else
+                    if (!(e instanceof Cons c))
                         throw new NoSuchElementException();
+                    Expr result = c.car;
+                    e = c.cdr;
+                    return result;
                 }
             };
         }
