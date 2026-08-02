@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.IntBinaryOperator;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -433,11 +434,8 @@ public class Lisp {
     }
 
     static Int intOperator2(List args, int unit, IntBinaryOperator operator) {
-        return Int.of(switch (args.size()) {
-            case 0 -> unit;
-            case 1 -> operator.applyAsInt(unit, args.at(0).asInt().value());
-            default -> args.stream().mapToInt(a -> a.asInt().value()).reduce(operator).getAsInt();
-        });
+        IntStream is = args.stream().mapToInt(a -> a.asInt().value());
+        return Int.of(args.size() <= 1 ? is.reduce(unit, operator) : is.reduce(operator).getAsInt());
     }
 
     static Symbol symbol(String value) {
