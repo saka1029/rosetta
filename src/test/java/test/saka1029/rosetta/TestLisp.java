@@ -206,6 +206,10 @@ public class TestLisp {
     }
 
     static Int intOperator(List args, int unit, IntBinaryOperator operator) {
+        return Int.of(args.stream().mapToInt(a -> a.asInt().value()).reduce(unit, operator));
+    }
+
+    static Int intOperator2(List args, int unit, IntBinaryOperator operator) {
         return Int.of(switch (args.size()) {
             case 0 -> unit;
             case 1 -> operator.applyAsInt(unit, args.at(0).asInt().value());
@@ -222,14 +226,16 @@ public class TestLisp {
         env.define(symbol("cdr"), (Procedure) args -> args.at(0).asCons().cdr());
         env.define(symbol("cons"), (Procedure) args -> Cons.of(args.at(0), args.at(1)));
         env.define(symbol("+"), (Procedure) args -> intOperator(args, 0, (a, b) -> a + b));
-        env.define(symbol("-"), (Procedure) args -> intOperator(args, 0, (a, b) -> a - b));
+        env.define(symbol("-"), (Procedure) args -> intOperator2(args, 0, (a, b) -> a - b));
         env.define(symbol("*"), (Procedure) args -> intOperator(args, 1, (a, b) -> a * b));
-        env.define(symbol("/"), (Procedure) args -> intOperator(args, 1, (a, b) -> a / b));
+        env.define(symbol("/"), (Procedure) args -> intOperator2(args, 1, (a, b) -> a / b));
         assertEquals(list(symbol("a"), symbol("b")), read("'(a b)").eval(env));
         assertEquals(cons(symbol("a"), symbol("b")), read("(cons 'a 'b)").eval(env));
         assertEquals(symbol("a"), read("(car '(a b c))").eval(env));
         assertEquals(list(symbol("b"), symbol("c")), read("(cdr '(a b c))").eval(env));
         assertEquals(symbol("a"), read("((lambda (x) (car x)) '(a b c))").eval(env));
+        assertEquals(Int.of(0), read("(+)").eval(env));
+        assertEquals(Int.of(1), read("(+ 1)").eval(env));
         assertEquals(Int.of(10), read("(+ 1 2 3 4)").eval(env));
         assertEquals(Int.of(0), read("(-)").eval(env));
         assertEquals(Int.of(-1), read("(- 1)").eval(env));
