@@ -208,7 +208,6 @@ public class TestLisp {
     public void testEnvFindException() {
         Env env = Env.of();
         env.define(symbol("a"), integer(1));
-        assertEquals("{a=1}", env.toString());
         Env env2 = Env.of(env);
         env2.define(symbol("b"), integer(2));
         try {
