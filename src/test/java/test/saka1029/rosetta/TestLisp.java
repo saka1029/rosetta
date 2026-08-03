@@ -260,6 +260,28 @@ public class TestLisp {
     }
 
     @Test
+    public void testEvalCompare() {
+        assertEquals(Bool.TRUE, read("(= 0 0)").eval(ENV));
+        assertEquals(Bool.FALSE, read("(= 1 0)").eval(ENV));
+        assertEquals(Bool.FALSE, read("(= 0 1)").eval(ENV));
+        assertEquals(Bool.FALSE, read("(!= 0 0)").eval(ENV));
+        assertEquals(Bool.TRUE, read("(!= 1 0)").eval(ENV));
+        assertEquals(Bool.TRUE, read("(!= 0 1)").eval(ENV));
+        assertEquals(Bool.FALSE, read("(< 0 0)").eval(ENV));
+        assertEquals(Bool.FALSE, read("(< 1 0)").eval(ENV));
+        assertEquals(Bool.TRUE, read("(< 0 1)").eval(ENV));
+        assertEquals(Bool.TRUE, read("(<= 0 0)").eval(ENV));
+        assertEquals(Bool.FALSE, read("(<= 1 0)").eval(ENV));
+        assertEquals(Bool.TRUE, read("(<= 0 1)").eval(ENV));
+        assertEquals(Bool.FALSE, read("(> 0 0)").eval(ENV));
+        assertEquals(Bool.TRUE, read("(> 1 0)").eval(ENV));
+        assertEquals(Bool.FALSE, read("(> 0 1)").eval(ENV));
+        assertEquals(Bool.TRUE, read("(>= 0 0)").eval(ENV));
+        assertEquals(Bool.TRUE, read("(>= 1 0)").eval(ENV));
+        assertEquals(Bool.FALSE, read("(>= 0 1)").eval(ENV));
+    }
+
+    @Test
     public void testEvalRecursion() {
         read("(define (fact n) (if (<= n 0) 1 (* n (fact (- n 1)))))").eval(ENV);
         assertEquals(integer(1), read("(fact 0)").eval(ENV));

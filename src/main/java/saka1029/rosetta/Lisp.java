@@ -458,7 +458,7 @@ public class Lisp {
         boolean test(int a, int b);
     }
 
-    static Bool compare(List args, IntBinaryPredicate predicate) {
+    static Bool intCompare(List args, IntBinaryPredicate predicate) {
         return Bool.of(predicate.test(args.at(0).asInt().value, args.at(1).asInt().value));
     }
 
@@ -481,11 +481,11 @@ public class Lisp {
         procedure(ENV, "-", args -> intOperator2(args, 0, (a, b) -> a - b));
         procedure(ENV, "*", args -> intOperator(args, 1, (a, b) -> a * b));
         procedure(ENV, "/", args -> intOperator2(args, 1, (a, b) -> a / b));
-        procedure(ENV, "=", args -> compare(args, (a, b) -> a == b));
-        procedure(ENV, "!=", args -> compare(args, (a, b) -> a != b));
-        procedure(ENV, "<", args -> compare(args, (a, b) -> a < b));
-        procedure(ENV, "<=", args -> compare(args, (a, b) -> a <= b));
-        procedure(ENV, ">", args -> compare(args, (a, b) -> a > b));
-        procedure(ENV, ">=", args -> compare(args, (a, b) -> a >= b));
+        procedure(ENV, "=", args -> intCompare(args, (a, b) -> a == b));
+        procedure(ENV, "!=", args -> intCompare(args, (a, b) -> a != b));
+        procedure(ENV, "<", args -> intCompare(args, (a, b) -> a < b));
+        procedure(ENV, "<=", args -> intCompare(args, (a, b) -> a <= b));
+        procedure(ENV, ">", args -> intCompare(args, (a, b) -> a > b));
+        procedure(ENV, ">=", args -> intCompare(args, (a, b) -> a >= b));
     }
 }
