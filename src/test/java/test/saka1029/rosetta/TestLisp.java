@@ -258,4 +258,14 @@ public class TestLisp {
         assertEquals(Int.of(0), read("(/ 2)").eval(ENV));
         assertEquals(Int.of(5), read("(/ 40 2 4)").eval(ENV));
     }
+
+    @Test
+    public void testEvalRecursion() {
+        read("(define (fact n) (if (<= n 0) 1 (* n (fact (- n 1)))))").eval(ENV);
+        assertEquals(integer(1), read("(fact 0)").eval(ENV));
+        assertEquals(integer(1), read("(fact 1)").eval(ENV));
+        assertEquals(integer(2), read("(fact 2)").eval(ENV));
+        assertEquals(integer(6), read("(fact 3)").eval(ENV));
+        assertEquals(integer(24), read("(fact 4)").eval(ENV));
+    }
 }
