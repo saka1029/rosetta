@@ -197,12 +197,20 @@ public class TestLisp {
     }
 
     @Test
-    public void testEval() {
+    public void testEvalQuote() {
         assertEquals(list(symbol("a"), symbol("b")), read("'(a b)").eval(ENV));
-        assertEquals(cons(symbol("a"), symbol("b")), read("(cons 'a 'b)").eval(ENV));
+        assertEquals(symbol("a"), read("'a").eval(ENV));
+    }
+
+    @Test
+    public void testEvalIf() {
         assertEquals(Int.of(1), read("(if true 1 2)").eval(ENV));
         assertEquals(Int.of(2), read("(if false 1 2)").eval(ENV));
         assertEquals(List.NIL, read("(if false 1)").eval(ENV));
+    }
+
+    @Test
+    public void testEvalDefine() {
         assertEquals(integer(3), read("(define three (+ 1 2))").eval(ENV));
         assertEquals(Int.of(3), ENV.get(symbol("three")));
         read("(define func (lambda (x) 1 (car x)))").eval(ENV);
@@ -211,20 +219,39 @@ public class TestLisp {
         read("(define (func2 x) 1 (car x)))").eval(ENV);
         assertNotNull(ENV.get(symbol("func2")));
         assertEquals(symbol("a"), read("(func2 '(a b))").eval(ENV));
+    }
+
+    @Test
+    public void testEvalCarCdrCons() {
         assertEquals(symbol("a"), read("(car '(a b c))").eval(ENV));
         assertEquals(list(symbol("b"), symbol("c")), read("(cdr '(a b c))").eval(ENV));
+        assertEquals(cons(symbol("a"), symbol("b")), read("(cons 'a 'b)").eval(ENV));
+        assertEquals(list(symbol("a")), read("(cons 'a '())").eval(ENV));
+    }
+
+    @Test
+    public void testEvalLambda() {
         assertEquals(symbol("a"), read("((lambda (x) (car x)) '(a b c))").eval(ENV));
         assertEquals(integer(3), read("((lambda (x) 1 2 3) '(a))").eval(ENV));
         assertEquals(list(symbol("b")), read("((lambda (x) (car x) (cdr x)) '(a b))").eval(ENV));
-        assertEquals(cons(symbol("a"), symbol("b")), read("(cons 'a 'b)").eval(ENV));
-        assertEquals(list(symbol("a")), read("(cons 'a '())").eval(ENV));
+    }
+
+    @Test
+    public void testEvalList() {
         assertEquals(list(symbol("a"), symbol("b")), read("(list 'a 'b)").eval(ENV));
+        assertEquals(list(cons(symbol("a"), symbol("b"))), read("(list '(a . b))").eval(ENV));
+    }
+
+    @Test
+    public void testEvalArithmetic() {
         assertEquals(Int.of(0), read("(+)").eval(ENV));
         assertEquals(Int.of(1), read("(+ 1)").eval(ENV));
         assertEquals(Int.of(10), read("(+ 1 2 3 4)").eval(ENV));
         assertEquals(Int.of(0), read("(-)").eval(ENV));
         assertEquals(Int.of(-1), read("(- 1)").eval(ENV));
         assertEquals(Int.of(-8), read("(- 1 2 3 4)").eval(ENV));
+        assertEquals(Int.of(1), read("(*)").eval(ENV));
+        assertEquals(Int.of(2), read("(* 2)").eval(ENV));
         assertEquals(Int.of(24), read("(* 1 2 3 4)").eval(ENV));
         assertEquals(Int.of(1), read("(/)").eval(ENV));
         assertEquals(Int.of(1), read("(/ 1)").eval(ENV));
