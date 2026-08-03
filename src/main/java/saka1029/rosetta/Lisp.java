@@ -57,7 +57,7 @@ public class Lisp {
         
         @Override
         public String toString() {
-            return map.toString() + (next != null ? " -> " + next : "");
+            return map.toString() + (next != null ? "->" + next : "");
         }
     }
 
@@ -469,6 +469,7 @@ public class Lisp {
         special(ENV, "if", (args, e) -> args.at(0).eval(e).asBool().value
              ? args.at(1).eval(e)
              : args.size() == 3 ? args.at(2).eval(e) : List.NIL);
+        special(ENV, "set", (args, e) -> e.set(args.at(0).asSymbol(), args.at(1).eval(e)));
         special(ENV, "define", (args, e) -> args.at(0) instanceof Symbol
             ? e.define(args.at(0).asSymbol(), args.at(1).eval(e))
             : e.define(args.at(0).asCons().car().asSymbol(),

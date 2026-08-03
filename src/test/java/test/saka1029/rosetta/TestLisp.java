@@ -9,6 +9,10 @@ import org.junit.Test;
 
 import static saka1029.rosetta.Lisp.*;
 
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 public class TestLisp {
 
     static Symbol symbol(String value) {
@@ -77,6 +81,24 @@ public class TestLisp {
     }
 
     @Test
+    public void testReadException() {
+        class IllegalReader extends java.io.Reader {
+            @Override
+            public void close() throws IOException { }
+            @Override
+            public int read(char[] cbuf, int off, int len) throws IOException {
+                throw new IOException("can't read");
+            }
+        }
+        try {
+            Reader.of(new IllegalReader());
+            fail();
+        } catch (RuntimeException e) {
+            assertEquals("can't read", e.getCause().getMessage());
+        }
+    }
+
+    @Test
     public void testToString() {
         assertEquals("12345", read("  12345").toString());
         assertEquals("abc.def", read("  abc.def").toString());
@@ -92,6 +114,9 @@ public class TestLisp {
         assertEquals("(quote . cdr)", read("(quote . cdr)").toString());
         assertEquals("(quote a . b)", read("(quote a . b)").toString());
         assertEquals("(quote)", read("(quote)").toString());
+        assertEquals("true", Bool.TRUE.toString());
+        assertEquals("false", Bool.FALSE.toString());
+        assertEquals("(closure (a) b)", Closure.of(list(symbol("a")), list(symbol("b")), Env.of()).toString());
     }
 
     @Test
@@ -113,6 +138,18 @@ public class TestLisp {
             fail();
         } catch (RuntimeException e) {
             assertEquals("Unexpected character ')'", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testListIterator() {
+        try {
+            List list = list(symbol("a"));
+            Iterator<Expr> it = list.iterator();
+            assertEquals(symbol("a"), it.next());
+            it.next();
+            fail();
+        } catch (NoSuchElementException e) {
         }
     }
 
@@ -155,6 +192,26 @@ public class TestLisp {
         assertEquals(list(symbol("c"), symbol("d")), reader.read());
         assertEquals(integer(123), reader.read());
         assertEquals(Reader.EOF, reader.read());
+    }
+
+    @Test
+    public void testEnvToString() {
+        Env env = Env.of();
+        env.define(symbol("a"), integer(1));
+        assertEquals("{a=1}", env.toString());
+        Env env2 = Env.of(env);
+        env2.define(symbol("b"), integer(2));
+        assertEquals("{b=2}->{a=1}", env2.toString());
+    }
+
+    @Test
+    public void testExprApply() {
+        Env env = Env.of();
+        try {
+            symbol("a").apply(List.NIL, env);
+        } catch (RuntimeException e) {
+            assertEquals("Cannot apply () to a", e.getMessage());
+        }
     }
 
     @Test
@@ -210,6 +267,13 @@ public class TestLisp {
     }
 
     @Test
+    public void testEvalSet() {
+        assertEquals(integer(1), read("(define v 1)").eval(ENV));
+        assertEquals(integer(2), read("(set v 2)").eval(ENV));
+        assertEquals(integer(2), read("v").eval(ENV));
+    }
+
+    @Test
     public void testEvalDefine() {
         assertEquals(integer(3), read("(define three (+ 1 2))").eval(ENV));
         assertEquals(integer(3), ENV.get(symbol("three")));
@@ -225,6 +289,8 @@ public class TestLisp {
         assertEquals(integer(1), read("(func4 1 2 3)").eval(ENV));
         read("(define (func5 x . y) y)").eval(ENV);
         assertEquals(list(integer(2), integer(3)), read("(func5 1 2 3)").eval(ENV));
+        read("(define (func6 x y . z) (cons x z))").eval(ENV);
+        assertEquals(list(integer(1), integer(3)), read("(func6 1 2 3)").eval(ENV));
     }
 
     @Test
