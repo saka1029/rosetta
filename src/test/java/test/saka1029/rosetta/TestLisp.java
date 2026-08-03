@@ -234,6 +234,9 @@ public class TestLisp {
         assertEquals(symbol("a"), read("((lambda (x) (car x)) '(a b c))").eval(ENV));
         assertEquals(integer(3), read("((lambda (x) 1 2 3) '(a))").eval(ENV));
         assertEquals(list(symbol("b")), read("((lambda (x) (car x) (cdr x)) '(a b))").eval(ENV));
+        assertEquals(list(integer(1), integer(2)), read("((lambda x x) 1 2)").eval(ENV));
+        assertEquals(integer(1), read("((lambda (x . y) x) 1 2)").eval(ENV));
+        assertEquals(list(integer(2)), read("((lambda (x . y) y) 1 2)").eval(ENV));
     }
 
     @Test
