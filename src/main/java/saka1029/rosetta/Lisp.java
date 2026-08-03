@@ -84,6 +84,10 @@ public class Lisp {
             return as(Bool.class);
         }
 
+        default Symbol asSymbol() {
+            return as(Symbol.class);
+        }
+
         default Int asInt() {
             return as(Int.class);
         }
@@ -408,12 +412,16 @@ public class Lisp {
         }
 
         static Expr progn(Expr body, Env env) {
-            if (!(body instanceof Cons b))
-                return body.eval(env);
-            if (b.cdr() == List.NIL)
-                return b.car().eval(env);
-            b.car().eval(env);
-            return progn(b.cdr(), env);
+            Expr result = List.NIL;
+            for (Expr b = body; b instanceof Cons c; b = c.cdr)
+                result = c.car().eval(env);
+            return result;
+            // if (!(body instanceof Cons b))
+            //     return body.eval(env);
+            // if (b.cdr() == List.NIL)
+            //     return b.car().eval(env);
+            // b.car().eval(env);
+            // return progn(b.cdr(), env);
         }
 
         @Override
@@ -453,6 +461,10 @@ public class Lisp {
         special(ENV, "if", (args, e) -> args.at(0).eval(e).asBool().value
              ? args.at(1).eval(e)
              : args.size() == 3 ? args.at(2).eval(e) : List.NIL);
+        special(ENV, "define", (args, e) -> args.at(0) instanceof Symbol
+            ? e.define(args.at(0).asSymbol(), args.at(1).eval(e))
+            : e.define(args.at(0).asCons().car().asSymbol(),
+                Closure.of(args.at(0).asCons().cdr(), args.asCons().cdr(), e)));
         procedure(ENV, "car", args -> args.at(0).asCons().car());
         procedure(ENV, "cdr", args -> args.at(0).asCons().cdr());
         procedure(ENV, "cons", args -> Cons.of(args.at(0), args.at(1)));

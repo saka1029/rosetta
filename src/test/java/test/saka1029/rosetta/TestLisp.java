@@ -1,6 +1,7 @@
 package test.saka1029.rosetta;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 
@@ -202,9 +203,19 @@ public class TestLisp {
         assertEquals(Int.of(1), read("(if true 1 2)").eval(ENV));
         assertEquals(Int.of(2), read("(if false 1 2)").eval(ENV));
         assertEquals(List.NIL, read("(if false 1)").eval(ENV));
+        assertEquals(integer(3), read("(define three (+ 1 2))").eval(ENV));
+        assertEquals(Int.of(3), ENV.get(symbol("three")));
+        read("(define func (lambda (x) 1 (car x)))").eval(ENV);
+        assertNotNull(ENV.get(symbol("func")));
+        assertEquals(symbol("a"), read("(func '(a b))").eval(ENV));
+        read("(define (func2 x) 1 (car x)))").eval(ENV);
+        assertNotNull(ENV.get(symbol("func2")));
+        assertEquals(symbol("a"), read("(func2 '(a b))").eval(ENV));
         assertEquals(symbol("a"), read("(car '(a b c))").eval(ENV));
         assertEquals(list(symbol("b"), symbol("c")), read("(cdr '(a b c))").eval(ENV));
         assertEquals(symbol("a"), read("((lambda (x) (car x)) '(a b c))").eval(ENV));
+        assertEquals(integer(3), read("((lambda (x) 1 2 3) '(a))").eval(ENV));
+        assertEquals(list(symbol("b")), read("((lambda (x) (car x) (cdr x)) '(a b))").eval(ENV));
         assertEquals(cons(symbol("a"), symbol("b")), read("(cons 'a 'b)").eval(ENV));
         assertEquals(list(symbol("a")), read("(cons 'a '())").eval(ENV));
         assertEquals(list(symbol("a"), symbol("b")), read("(list 'a 'b)").eval(ENV));
