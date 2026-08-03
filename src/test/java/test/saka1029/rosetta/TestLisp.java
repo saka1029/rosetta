@@ -282,6 +282,22 @@ public class TestLisp {
     }
 
     @Test
+    public void testEvalAnd() {
+        assertEquals(Bool.TRUE, read("(and)").eval(ENV));
+        assertEquals(Bool.FALSE, read("(and false 1)").eval(ENV));
+        assertEquals(integer(3), read("(and 1 2 3)").eval(ENV));
+        assertEquals(Bool.FALSE, read("(and 1 2 3 false)").eval(ENV));
+    }
+
+    @Test
+    public void testEvalOr() {
+        assertEquals(Bool.FALSE, read("(or)").eval(ENV));
+        assertEquals(integer(1), read("(or false 1)").eval(ENV));
+        assertEquals(integer(1), read("(or 1 2 3)").eval(ENV));
+        assertEquals(Bool.FALSE, read("(or false false false)").eval(ENV));
+    }
+
+    @Test
     public void testEvalRecursion() {
         read("(define (fact n) (if (<= n 0) 1 (* n (fact (- n 1)))))").eval(ENV);
         assertEquals(integer(1), read("(fact 0)").eval(ENV));

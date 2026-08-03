@@ -473,6 +473,20 @@ public class Lisp {
             ? e.define(args.at(0).asSymbol(), args.at(1).eval(e))
             : e.define(args.at(0).asCons().car().asSymbol(),
                 Closure.of(args.at(0).asCons().cdr(), args.asCons().cdr(), e)));
+        special(ENV, "and", (args, e) -> {
+            Expr result = Bool.TRUE;
+            for (Expr x : args)
+                if ((result = x.eval(e)) == Bool.FALSE)
+                    return Bool.FALSE;
+            return result;
+        });
+        special(ENV, "or", (args, e) -> {
+            Expr result = Bool.FALSE;
+            for (Expr x : args)
+                if ((result = x.eval(e)) != Bool.FALSE)
+                    return result;
+            return Bool.FALSE;
+        });
         procedure(ENV, "car", args -> args.at(0).asCons().car());
         procedure(ENV, "cdr", args -> args.at(0).asCons().cdr());
         procedure(ENV, "cons", args -> Cons.of(args.at(0), args.at(1)));
