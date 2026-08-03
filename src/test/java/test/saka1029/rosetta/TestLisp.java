@@ -204,21 +204,27 @@ public class TestLisp {
 
     @Test
     public void testEvalIf() {
-        assertEquals(Int.of(1), read("(if true 1 2)").eval(ENV));
-        assertEquals(Int.of(2), read("(if false 1 2)").eval(ENV));
+        assertEquals(integer(1), read("(if true 1 2)").eval(ENV));
+        assertEquals(integer(2), read("(if false 1 2)").eval(ENV));
         assertEquals(List.NIL, read("(if false 1)").eval(ENV));
     }
 
     @Test
     public void testEvalDefine() {
         assertEquals(integer(3), read("(define three (+ 1 2))").eval(ENV));
-        assertEquals(Int.of(3), ENV.get(symbol("three")));
+        assertEquals(integer(3), ENV.get(symbol("three")));
         read("(define func (lambda (x) 1 (car x)))").eval(ENV);
         assertNotNull(ENV.get(symbol("func")));
         assertEquals(symbol("a"), read("(func '(a b))").eval(ENV));
         read("(define (func2 x) 1 (car x)))").eval(ENV);
         assertNotNull(ENV.get(symbol("func2")));
         assertEquals(symbol("a"), read("(func2 '(a b))").eval(ENV));
+        read("(define (func3 . x) x)").eval(ENV);
+        assertEquals(list(integer(1), integer(2), integer(3)), read("(func3 1 2 3)").eval(ENV));
+        read("(define (func4 x . y) x)").eval(ENV);
+        assertEquals(integer(1), read("(func4 1 2 3)").eval(ENV));
+        read("(define (func5 x . y) y)").eval(ENV);
+        assertEquals(list(integer(2), integer(3)), read("(func5 1 2 3)").eval(ENV));
     }
 
     @Test
@@ -247,19 +253,19 @@ public class TestLisp {
 
     @Test
     public void testEvalArithmetic() {
-        assertEquals(Int.of(0), read("(+)").eval(ENV));
-        assertEquals(Int.of(1), read("(+ 1)").eval(ENV));
-        assertEquals(Int.of(10), read("(+ 1 2 3 4)").eval(ENV));
-        assertEquals(Int.of(0), read("(-)").eval(ENV));
-        assertEquals(Int.of(-1), read("(- 1)").eval(ENV));
-        assertEquals(Int.of(-8), read("(- 1 2 3 4)").eval(ENV));
-        assertEquals(Int.of(1), read("(*)").eval(ENV));
-        assertEquals(Int.of(2), read("(* 2)").eval(ENV));
-        assertEquals(Int.of(24), read("(* 1 2 3 4)").eval(ENV));
-        assertEquals(Int.of(1), read("(/)").eval(ENV));
-        assertEquals(Int.of(1), read("(/ 1)").eval(ENV));
-        assertEquals(Int.of(0), read("(/ 2)").eval(ENV));
-        assertEquals(Int.of(5), read("(/ 40 2 4)").eval(ENV));
+        assertEquals(integer(0), read("(+)").eval(ENV));
+        assertEquals(integer(1), read("(+ 1)").eval(ENV));
+        assertEquals(integer(10), read("(+ 1 2 3 4)").eval(ENV));
+        assertEquals(integer(0), read("(-)").eval(ENV));
+        assertEquals(integer(-1), read("(- 1)").eval(ENV));
+        assertEquals(integer(-8), read("(- 1 2 3 4)").eval(ENV));
+        assertEquals(integer(1), read("(*)").eval(ENV));
+        assertEquals(integer(2), read("(* 2)").eval(ENV));
+        assertEquals(integer(24), read("(* 1 2 3 4)").eval(ENV));
+        assertEquals(integer(1), read("(/)").eval(ENV));
+        assertEquals(integer(1), read("(/ 1)").eval(ENV));
+        assertEquals(integer(0), read("(/ 2)").eval(ENV));
+        assertEquals(integer(5), read("(/ 40 2 4)").eval(ENV));
     }
 
     @Test
