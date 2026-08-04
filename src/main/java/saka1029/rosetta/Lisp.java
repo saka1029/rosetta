@@ -76,6 +76,10 @@ public class Lisp {
                     "Can't cast '%s' as %s".formatted(this, t.getSimpleName()));
         }
 
+        default List asList() {
+            return as(List.class);
+        }
+
         default Cons asCons() {
             return as(Cons.class);
         }
@@ -462,6 +466,13 @@ public class Lisp {
         return Bool.of(predicate.test(args.at(0).asInt().value, args.at(1).asInt().value));
     }
 
+    static Expr begin(List args, Env e) {
+        Expr result = List.NIL;
+        for (Expr x : args)
+            result = x.eval(e);
+        return result;
+    }
+
     public static Env ENV = Env.of();
     static {
         special(ENV, "quote", (args, e) -> args.at(0));
@@ -488,11 +499,20 @@ public class Lisp {
                     return result;
             return Bool.FALSE;
         });
+        special(ENV, "begin", (args, e) -> begin(args, e));
+        special(ENV, "cond", (args, e) -> {
+            for (Expr c : args) {
+                List clause = c.asList();
+                if (clause.at(0) == Symbol.of("else")
+                    || clause.at(0).eval(e) != Bool.FALSE)
+                    return begin(clause.asCons().cdr.asList(), e);
+            }
+            return List.NIL;
+        });
         procedure(ENV, "car", args -> args.at(0).asCons().car());
         procedure(ENV, "cdr", args -> args.at(0).asCons().cdr());
         procedure(ENV, "cons", args -> Cons.of(args.at(0), args.at(1)));
         procedure(ENV, "list", args -> args);
-        procedure(ENV, "begin", args -> args instanceof Cons ? args.at(args.size() - 1) : List.NIL);
         procedure(ENV, "not", args -> Bool.of(!args.at(0).asBool().value));
         procedure(ENV, "+", args -> intOperator(args, 0, (a, b) -> a + b));
         procedure(ENV, "-", args -> intOperator2(args, 0, (a, b) -> a - b));

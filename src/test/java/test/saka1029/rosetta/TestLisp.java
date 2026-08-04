@@ -296,6 +296,30 @@ public class TestLisp {
     }
 
     @Test
+    public void testEvalCond() {
+        assertEquals(List.NIL, read("(cond)").eval(ENV));
+        assertEquals(integer(3), read("(cond (else 3))").eval(ENV));
+        read("(define age 0)").eval(ENV);
+        read("""
+            (define (f age)
+              (cond   
+                ((or (<= age 3) (>= age 65)) 0)
+                ((<= age 4) 50)
+                ((<= age 7) 100)
+                ((<= age 13) 150)
+                ((<= age 16) 180)
+                (else 200)))
+        """).eval(ENV);
+        assertEquals(integer(0), read("(f 0)").eval(ENV));
+        assertEquals(integer(100), read("(f 5)").eval(ENV));
+        assertEquals(integer(100), read("(f 6)").eval(ENV));
+        assertEquals(integer(150), read("(f 8)").eval(ENV));
+        assertEquals(integer(180), read("(f 15)").eval(ENV));
+        assertEquals(integer(200), read("(f 20)").eval(ENV));
+
+    }
+
+    @Test
     public void testEvalNot() {
         assertEquals(Bool.FALSE, read("(not true)").eval(ENV));
         assertEquals(Bool.TRUE, read("(not false)").eval(ENV));
