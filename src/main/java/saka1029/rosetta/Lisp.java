@@ -513,6 +513,11 @@ public class Lisp {
             }
             return List.NIL;
         });
+        special(ENV, "when", (args, e) -> {
+            return args.at(0).eval(e).asBool() != Bool.FALSE
+                ? begin(args.asCons().cdr.asList(), e)
+                : List.NIL;
+        });
         procedure(ENV, "car", args -> args.at(0).asCons().car());
         procedure(ENV, "cdr", args -> args.at(0).asCons().cdr());
         procedure(ENV, "cons", args -> Cons.of(args.at(0), args.at(1)));

@@ -322,7 +322,15 @@ public class TestLisp {
         assertEquals(integer(150), read("(f 15)").eval(env));
         assertEquals(integer(180), read("(f 17)").eval(env));
         assertEquals(integer(200), read("(f 20)").eval(env));
+    }
 
+    @Test
+    public void testEvalWhen() {
+        Env env = Env.of(ENV);
+        assertEquals(integer(3), read("(when true 1 2 3)").eval(env));
+        assertEquals(List.NIL, read("(when false 1 2 3)").eval(env));
+        assertEquals(integer(3), read("(when (>= 3 3) (define when-var 9) 2 3)").eval(env));
+        assertEquals(integer(9), env.get(symbol("when-var")));
     }
 
     @Test
