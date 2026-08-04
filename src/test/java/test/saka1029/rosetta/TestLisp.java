@@ -211,7 +211,7 @@ public class TestLisp {
         Env env2 = Env.of(env);
         env2.define(symbol("b"), integer(2));
         try {
-            env.get(symbol("c"));
+            read("c").eval(env);
             fail();
         } catch (RuntimeException e) {
             assertEquals("Variable c not found", e.getMessage());
@@ -295,7 +295,7 @@ public class TestLisp {
         Env env = Env.of(ENV);
         assertEquals(integer(3), read("(begin 1 2 3)").eval(env));
         assertEquals(integer(3), read("(begin (define begin-var (+ 1 3)) 2 3)").eval(env));
-        assertEquals(integer(4), env.get(symbol("begin-var")));
+        assertEquals(integer(4), read("begin-var").eval(env));
         assertEquals(List.NIL, read("(begin)").eval(env));
     }
 
@@ -330,7 +330,16 @@ public class TestLisp {
         assertEquals(integer(3), read("(when true 1 2 3)").eval(env));
         assertEquals(List.NIL, read("(when false 1 2 3)").eval(env));
         assertEquals(integer(3), read("(when (>= 3 3) (define when-var 9) 2 3)").eval(env));
-        assertEquals(integer(9), env.get(symbol("when-var")));
+        assertEquals(integer(9), read("when-var").eval(env));
+    }
+
+    @Test
+    public void testEvalUnless() {
+        Env env = Env.of(ENV);
+        assertEquals(integer(3), read("(unless false 1 2 3)").eval(env));
+        assertEquals(List.NIL, read("(unless true 1 2 3)").eval(env));
+        assertEquals(integer(3), read("(unless (< 3 3) (define unless-var 9) 2 3)").eval(env));
+        assertEquals(integer(9), read("unless-var").eval(env));
     }
 
     @Test
@@ -346,12 +355,12 @@ public class TestLisp {
     public void testEvalDefine() {
         Env env = Env.of(ENV);
         assertEquals(integer(3), read("(define three (+ 1 2))").eval(env));
-        assertEquals(integer(3), env.get(symbol("three")));
+        assertEquals(integer(3), read("three").eval(env));
         read("(define func (lambda (x) 1 (car x)))").eval(env);
-        assertNotNull(env.get(symbol("func")));
+        assertNotNull(read("func").eval(env));
         assertEquals(symbol("a"), read("(func '(a b))").eval(env));
         read("(define (func2 x) 1 (car x)))").eval(env);
-        assertNotNull(env.get(symbol("func2")));
+        assertNotNull(read("func2").eval(env));
         assertEquals(symbol("a"), read("(func2 '(a b))").eval(env));
         read("(define (func3 . x) x)").eval(env);
         assertEquals(list(integer(1), integer(2), integer(3)), read("(func3 1 2 3)").eval(env));
