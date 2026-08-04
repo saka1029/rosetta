@@ -302,19 +302,20 @@ public class TestLisp {
         read("(define age 0)").eval(ENV);
         read("""
             (define (f age)
-              (cond   
+              (cond
                 ((or (<= age 3) (>= age 65)) 0)
-                ((<= age 4) 50)
-                ((<= age 7) 100)
-                ((<= age 13) 150)
-                ((<= age 16) 180)
+                ((<= 4 age 6) 50)
+                ((<= 7 age 12) 100)
+                ((<= 13 age 15) 150)
+                ((<= 16 age 18) 180)
                 (else 200)))
         """).eval(ENV);
         assertEquals(integer(0), read("(f 0)").eval(ENV));
-        assertEquals(integer(100), read("(f 5)").eval(ENV));
-        assertEquals(integer(100), read("(f 6)").eval(ENV));
-        assertEquals(integer(150), read("(f 8)").eval(ENV));
-        assertEquals(integer(180), read("(f 15)").eval(ENV));
+        assertEquals(integer(50), read("(f 5)").eval(ENV));
+        assertEquals(integer(50), read("(f 6)").eval(ENV));
+        assertEquals(integer(100), read("(f 8)").eval(ENV));
+        assertEquals(integer(150), read("(f 15)").eval(ENV));
+        assertEquals(integer(180), read("(f 17)").eval(ENV));
         assertEquals(integer(200), read("(f 20)").eval(ENV));
 
     }
