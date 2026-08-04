@@ -463,7 +463,11 @@ public class Lisp {
     }
 
     static Bool intCompare(List args, IntBinaryPredicate predicate) {
-        return Bool.of(predicate.test(args.at(0).asInt().value, args.at(1).asInt().value));
+        int prev = args.at(0).asInt().value;
+        for (Expr e : args.asCons().cdr.asList())
+            if (!predicate.test(prev, prev = e.asInt().value))
+                return Bool.FALSE;
+        return Bool.TRUE;
     }
 
     static Expr begin(List args, Env e) {

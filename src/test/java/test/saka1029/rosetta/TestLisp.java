@@ -408,6 +408,9 @@ public class TestLisp {
         assertEquals(Bool.TRUE, read("(>= 0 0)").eval(ENV));
         assertEquals(Bool.TRUE, read("(>= 1 0)").eval(ENV));
         assertEquals(Bool.FALSE, read("(>= 0 1)").eval(ENV));
+        assertEquals(Bool.TRUE, read("(< 0 1 3 5)").eval(ENV));
+        assertEquals(Bool.FALSE, read("(< 0 1 3 2)").eval(ENV));
+        assertEquals(Bool.FALSE, read("(< 0 -1 2 4)").eval(ENV));
     }
 
     @Test
