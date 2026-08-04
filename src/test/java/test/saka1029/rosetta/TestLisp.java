@@ -288,6 +288,22 @@ public class TestLisp {
     }
 
     @Test
+    public void testEvalBegin() {
+        assertEquals(integer(3), read("(begin 1 2 3)").eval(ENV));
+        assertEquals(integer(3), read("(begin (define begin-var (+ 1 3)) 2 3)").eval(ENV));
+        assertEquals(integer(4), ENV.get(symbol("begin-var")));
+        assertEquals(List.NIL, read("(begin)").eval(ENV));
+    }
+
+    @Test
+    public void testEvalNot() {
+        assertEquals(Bool.FALSE, read("(not true)").eval(ENV));
+        assertEquals(Bool.TRUE, read("(not false)").eval(ENV));
+        assertEquals(Bool.FALSE, read("(not (< 1 2))").eval(ENV));
+        assertEquals(Bool.TRUE, read("(not (< 2 1))").eval(ENV));
+    }
+
+    @Test
     public void testEvalDefine() {
         assertEquals(integer(3), read("(define three (+ 1 2))").eval(ENV));
         assertEquals(integer(3), ENV.get(symbol("three")));

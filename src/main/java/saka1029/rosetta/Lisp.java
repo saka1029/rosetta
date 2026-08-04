@@ -492,6 +492,8 @@ public class Lisp {
         procedure(ENV, "cdr", args -> args.at(0).asCons().cdr());
         procedure(ENV, "cons", args -> Cons.of(args.at(0), args.at(1)));
         procedure(ENV, "list", args -> args);
+        procedure(ENV, "begin", args -> args instanceof Cons ? args.at(args.size() - 1) : List.NIL);
+        procedure(ENV, "not", args -> Bool.of(!args.at(0).asBool().value));
         procedure(ENV, "+", args -> intOperator(args, 0, (a, b) -> a + b));
         procedure(ENV, "-", args -> intOperator2(args, 0, (a, b) -> a - b));
         procedure(ENV, "*", args -> intOperator(args, 1, (a, b) -> a * b));
