@@ -269,37 +269,42 @@ public class TestLisp {
 
     @Test
     public void testEvalQuote() {
-        assertEquals(list(symbol("a"), symbol("b")), read("'(a b)").eval(ENV));
-        assertEquals(symbol("a"), read("'a").eval(ENV));
+        Env env = Env.of(ENV);
+        assertEquals(list(symbol("a"), symbol("b")), read("'(a b)").eval(env));
+        assertEquals(symbol("a"), read("'a").eval(env));
     }
 
     @Test
     public void testEvalIf() {
-        assertEquals(integer(1), read("(if true 1 2)").eval(ENV));
-        assertEquals(integer(2), read("(if false 1 2)").eval(ENV));
-        assertEquals(List.NIL, read("(if false 1)").eval(ENV));
+        Env env = Env.of(ENV);
+        assertEquals(integer(1), read("(if true 1 2)").eval(env));
+        assertEquals(integer(2), read("(if false 1 2)").eval(env));
+        assertEquals(List.NIL, read("(if false 1)").eval(env));
     }
 
     @Test
     public void testEvalSet() {
-        assertEquals(integer(1), read("(define v 1)").eval(ENV));
-        assertEquals(integer(2), read("(set v 2)").eval(ENV));
-        assertEquals(integer(2), read("v").eval(ENV));
+        Env env = Env.of(ENV);
+        assertEquals(integer(1), read("(define v 1)").eval(env));
+        assertEquals(integer(2), read("(set v 2)").eval(env));
+        assertEquals(integer(2), read("v").eval(env));
     }
 
     @Test
     public void testEvalBegin() {
-        assertEquals(integer(3), read("(begin 1 2 3)").eval(ENV));
-        assertEquals(integer(3), read("(begin (define begin-var (+ 1 3)) 2 3)").eval(ENV));
-        assertEquals(integer(4), ENV.get(symbol("begin-var")));
-        assertEquals(List.NIL, read("(begin)").eval(ENV));
+        Env env = Env.of(ENV);
+        assertEquals(integer(3), read("(begin 1 2 3)").eval(env));
+        assertEquals(integer(3), read("(begin (define begin-var (+ 1 3)) 2 3)").eval(env));
+        assertEquals(integer(4), env.get(symbol("begin-var")));
+        assertEquals(List.NIL, read("(begin)").eval(env));
     }
 
     @Test
     public void testEvalCond() {
-        assertEquals(List.NIL, read("(cond)").eval(ENV));
-        assertEquals(integer(3), read("(cond (else 3))").eval(ENV));
-        read("(define age 0)").eval(ENV);
+        Env env = Env.of(ENV);
+        assertEquals(List.NIL, read("(cond)").eval(env));
+        assertEquals(integer(3), read("(cond (else 3))").eval(env));
+        read("(define age 0)").eval(env);
         read("""
             (define (f age)
               (cond
@@ -309,134 +314,144 @@ public class TestLisp {
                 ((<= 13 age 15) 150)
                 ((<= 16 age 18) 180)
                 (else 200)))
-        """).eval(ENV);
-        assertEquals(integer(0), read("(f 0)").eval(ENV));
-        assertEquals(integer(50), read("(f 5)").eval(ENV));
-        assertEquals(integer(50), read("(f 6)").eval(ENV));
-        assertEquals(integer(100), read("(f 8)").eval(ENV));
-        assertEquals(integer(150), read("(f 15)").eval(ENV));
-        assertEquals(integer(180), read("(f 17)").eval(ENV));
-        assertEquals(integer(200), read("(f 20)").eval(ENV));
+        """).eval(env);
+        assertEquals(integer(0), read("(f 0)").eval(env));
+        assertEquals(integer(50), read("(f 5)").eval(env));
+        assertEquals(integer(50), read("(f 6)").eval(env));
+        assertEquals(integer(100), read("(f 8)").eval(env));
+        assertEquals(integer(150), read("(f 15)").eval(env));
+        assertEquals(integer(180), read("(f 17)").eval(env));
+        assertEquals(integer(200), read("(f 20)").eval(env));
 
     }
 
     @Test
     public void testEvalNot() {
-        assertEquals(Bool.FALSE, read("(not true)").eval(ENV));
-        assertEquals(Bool.TRUE, read("(not false)").eval(ENV));
-        assertEquals(Bool.FALSE, read("(not (< 1 2))").eval(ENV));
-        assertEquals(Bool.TRUE, read("(not (< 2 1))").eval(ENV));
+        Env env = Env.of(ENV);
+        assertEquals(Bool.FALSE, read("(not true)").eval(env));
+        assertEquals(Bool.TRUE, read("(not false)").eval(env));
+        assertEquals(Bool.FALSE, read("(not (< 1 2))").eval(env));
+        assertEquals(Bool.TRUE, read("(not (< 2 1))").eval(env));
     }
 
     @Test
     public void testEvalDefine() {
-        assertEquals(integer(3), read("(define three (+ 1 2))").eval(ENV));
-        assertEquals(integer(3), ENV.get(symbol("three")));
-        read("(define func (lambda (x) 1 (car x)))").eval(ENV);
-        assertNotNull(ENV.get(symbol("func")));
-        assertEquals(symbol("a"), read("(func '(a b))").eval(ENV));
-        read("(define (func2 x) 1 (car x)))").eval(ENV);
-        assertNotNull(ENV.get(symbol("func2")));
-        assertEquals(symbol("a"), read("(func2 '(a b))").eval(ENV));
-        read("(define (func3 . x) x)").eval(ENV);
-        assertEquals(list(integer(1), integer(2), integer(3)), read("(func3 1 2 3)").eval(ENV));
-        read("(define (func4 x . y) x)").eval(ENV);
-        assertEquals(integer(1), read("(func4 1 2 3)").eval(ENV));
-        read("(define (func5 x . y) y)").eval(ENV);
-        assertEquals(list(integer(2), integer(3)), read("(func5 1 2 3)").eval(ENV));
-        read("(define (func6 x y . z) (cons x z))").eval(ENV);
-        assertEquals(list(integer(1), integer(3)), read("(func6 1 2 3)").eval(ENV));
+        Env env = Env.of(ENV);
+        assertEquals(integer(3), read("(define three (+ 1 2))").eval(env));
+        assertEquals(integer(3), env.get(symbol("three")));
+        read("(define func (lambda (x) 1 (car x)))").eval(env);
+        assertNotNull(env.get(symbol("func")));
+        assertEquals(symbol("a"), read("(func '(a b))").eval(env));
+        read("(define (func2 x) 1 (car x)))").eval(env);
+        assertNotNull(env.get(symbol("func2")));
+        assertEquals(symbol("a"), read("(func2 '(a b))").eval(env));
+        read("(define (func3 . x) x)").eval(env);
+        assertEquals(list(integer(1), integer(2), integer(3)), read("(func3 1 2 3)").eval(env));
+        read("(define (func4 x . y) x)").eval(env);
+        assertEquals(integer(1), read("(func4 1 2 3)").eval(env));
+        read("(define (func5 x . y) y)").eval(env);
+        assertEquals(list(integer(2), integer(3)), read("(func5 1 2 3)").eval(env));
+        read("(define (func6 x y . z) (cons x z))").eval(env);
+        assertEquals(list(integer(1), integer(3)), read("(func6 1 2 3)").eval(env));
     }
 
     @Test
     public void testEvalCarCdrCons() {
-        assertEquals(symbol("a"), read("(car '(a b c))").eval(ENV));
-        assertEquals(list(symbol("b"), symbol("c")), read("(cdr '(a b c))").eval(ENV));
-        assertEquals(cons(symbol("a"), symbol("b")), read("(cons 'a 'b)").eval(ENV));
-        assertEquals(list(symbol("a")), read("(cons 'a '())").eval(ENV));
+        Env env = Env.of(ENV);
+        assertEquals(symbol("a"), read("(car '(a b c))").eval(env));
+        assertEquals(list(symbol("b"), symbol("c")), read("(cdr '(a b c))").eval(env));
+        assertEquals(cons(symbol("a"), symbol("b")), read("(cons 'a 'b)").eval(env));
+        assertEquals(list(symbol("a")), read("(cons 'a '())").eval(env));
     }
 
     @Test
     public void testEvalLambda() {
-        assertEquals(symbol("a"), read("((lambda (x) (car x)) '(a b c))").eval(ENV));
-        assertEquals(integer(3), read("((lambda (x) 1 2 3) '(a))").eval(ENV));
-        assertEquals(list(symbol("b")), read("((lambda (x) (car x) (cdr x)) '(a b))").eval(ENV));
-        assertEquals(list(integer(1), integer(2)), read("((lambda x x) 1 2)").eval(ENV));
-        assertEquals(integer(1), read("((lambda (x . y) x) 1 2)").eval(ENV));
-        assertEquals(list(integer(2)), read("((lambda (x . y) y) 1 2)").eval(ENV));
+        Env env = Env.of(ENV);
+        assertEquals(symbol("a"), read("((lambda (x) (car x)) '(a b c))").eval(env));
+        assertEquals(integer(3), read("((lambda (x) 1 2 3) '(a))").eval(env));
+        assertEquals(list(symbol("b")), read("((lambda (x) (car x) (cdr x)) '(a b))").eval(env));
+        assertEquals(list(integer(1), integer(2)), read("((lambda x x) 1 2)").eval(env));
+        assertEquals(integer(1), read("((lambda (x . y) x) 1 2)").eval(env));
+        assertEquals(list(integer(2)), read("((lambda (x . y) y) 1 2)").eval(env));
     }
 
     @Test
     public void testEvalList() {
-        assertEquals(list(symbol("a"), symbol("b")), read("(list 'a 'b)").eval(ENV));
-        assertEquals(list(cons(symbol("a"), symbol("b"))), read("(list '(a . b))").eval(ENV));
+        Env env = Env.of(ENV);
+        assertEquals(list(symbol("a"), symbol("b")), read("(list 'a 'b)").eval(env));
+        assertEquals(list(cons(symbol("a"), symbol("b"))), read("(list '(a . b))").eval(env));
     }
 
     @Test
     public void testEvalArithmetic() {
-        assertEquals(integer(0), read("(+)").eval(ENV));
-        assertEquals(integer(1), read("(+ 1)").eval(ENV));
-        assertEquals(integer(10), read("(+ 1 2 3 4)").eval(ENV));
-        assertEquals(integer(0), read("(-)").eval(ENV));
-        assertEquals(integer(-1), read("(- 1)").eval(ENV));
-        assertEquals(integer(-8), read("(- 1 2 3 4)").eval(ENV));
-        assertEquals(integer(1), read("(*)").eval(ENV));
-        assertEquals(integer(2), read("(* 2)").eval(ENV));
-        assertEquals(integer(24), read("(* 1 2 3 4)").eval(ENV));
-        assertEquals(integer(1), read("(/)").eval(ENV));
-        assertEquals(integer(1), read("(/ 1)").eval(ENV));
-        assertEquals(integer(0), read("(/ 2)").eval(ENV));
-        assertEquals(integer(5), read("(/ 40 2 4)").eval(ENV));
+        Env env = Env.of(ENV);
+        assertEquals(integer(0), read("(+)").eval(env));
+        assertEquals(integer(1), read("(+ 1)").eval(env));
+        assertEquals(integer(10), read("(+ 1 2 3 4)").eval(env));
+        assertEquals(integer(0), read("(-)").eval(env));
+        assertEquals(integer(-1), read("(- 1)").eval(env));
+        assertEquals(integer(-8), read("(- 1 2 3 4)").eval(env));
+        assertEquals(integer(1), read("(*)").eval(env));
+        assertEquals(integer(2), read("(* 2)").eval(env));
+        assertEquals(integer(24), read("(* 1 2 3 4)").eval(env));
+        assertEquals(integer(1), read("(/)").eval(env));
+        assertEquals(integer(1), read("(/ 1)").eval(env));
+        assertEquals(integer(0), read("(/ 2)").eval(env));
+        assertEquals(integer(5), read("(/ 40 2 4)").eval(env));
     }
 
     @Test
     public void testEvalCompare() {
-        assertEquals(Bool.TRUE, read("(= 0 0)").eval(ENV));
-        assertEquals(Bool.FALSE, read("(= 1 0)").eval(ENV));
-        assertEquals(Bool.FALSE, read("(= 0 1)").eval(ENV));
-        assertEquals(Bool.FALSE, read("(!= 0 0)").eval(ENV));
-        assertEquals(Bool.TRUE, read("(!= 1 0)").eval(ENV));
-        assertEquals(Bool.TRUE, read("(!= 0 1)").eval(ENV));
-        assertEquals(Bool.FALSE, read("(< 0 0)").eval(ENV));
-        assertEquals(Bool.FALSE, read("(< 1 0)").eval(ENV));
-        assertEquals(Bool.TRUE, read("(< 0 1)").eval(ENV));
-        assertEquals(Bool.TRUE, read("(<= 0 0)").eval(ENV));
-        assertEquals(Bool.FALSE, read("(<= 1 0)").eval(ENV));
-        assertEquals(Bool.TRUE, read("(<= 0 1)").eval(ENV));
-        assertEquals(Bool.FALSE, read("(> 0 0)").eval(ENV));
-        assertEquals(Bool.TRUE, read("(> 1 0)").eval(ENV));
-        assertEquals(Bool.FALSE, read("(> 0 1)").eval(ENV));
-        assertEquals(Bool.TRUE, read("(>= 0 0)").eval(ENV));
-        assertEquals(Bool.TRUE, read("(>= 1 0)").eval(ENV));
-        assertEquals(Bool.FALSE, read("(>= 0 1)").eval(ENV));
-        assertEquals(Bool.TRUE, read("(< 0 1 3 5)").eval(ENV));
-        assertEquals(Bool.FALSE, read("(< 0 1 3 2)").eval(ENV));
-        assertEquals(Bool.FALSE, read("(< 0 -1 2 4)").eval(ENV));
+        Env env = Env.of(ENV);
+        assertEquals(Bool.TRUE, read("(= 0 0)").eval(env));
+        assertEquals(Bool.FALSE, read("(= 1 0)").eval(env));
+        assertEquals(Bool.FALSE, read("(= 0 1)").eval(env));
+        assertEquals(Bool.FALSE, read("(!= 0 0)").eval(env));
+        assertEquals(Bool.TRUE, read("(!= 1 0)").eval(env));
+        assertEquals(Bool.TRUE, read("(!= 0 1)").eval(env));
+        assertEquals(Bool.FALSE, read("(< 0 0)").eval(env));
+        assertEquals(Bool.FALSE, read("(< 1 0)").eval(env));
+        assertEquals(Bool.TRUE, read("(< 0 1)").eval(env));
+        assertEquals(Bool.TRUE, read("(<= 0 0)").eval(env));
+        assertEquals(Bool.FALSE, read("(<= 1 0)").eval(env));
+        assertEquals(Bool.TRUE, read("(<= 0 1)").eval(env));
+        assertEquals(Bool.FALSE, read("(> 0 0)").eval(env));
+        assertEquals(Bool.TRUE, read("(> 1 0)").eval(env));
+        assertEquals(Bool.FALSE, read("(> 0 1)").eval(env));
+        assertEquals(Bool.TRUE, read("(>= 0 0)").eval(env));
+        assertEquals(Bool.TRUE, read("(>= 1 0)").eval(env));
+        assertEquals(Bool.FALSE, read("(>= 0 1)").eval(env));
+        assertEquals(Bool.TRUE, read("(< 0 1 3 5)").eval(env));
+        assertEquals(Bool.FALSE, read("(< 0 1 3 2)").eval(env));
+        assertEquals(Bool.FALSE, read("(< 0 -1 2 4)").eval(env));
     }
 
     @Test
     public void testEvalAnd() {
-        assertEquals(Bool.TRUE, read("(and)").eval(ENV));
-        assertEquals(Bool.FALSE, read("(and false 1)").eval(ENV));
-        assertEquals(integer(3), read("(and 1 2 3)").eval(ENV));
-        assertEquals(Bool.FALSE, read("(and 1 2 3 false)").eval(ENV));
+        Env env = Env.of(ENV);
+        assertEquals(Bool.TRUE, read("(and)").eval(env));
+        assertEquals(Bool.FALSE, read("(and false 1)").eval(env));
+        assertEquals(integer(3), read("(and 1 2 3)").eval(env));
+        assertEquals(Bool.FALSE, read("(and 1 2 3 false)").eval(env));
     }
 
     @Test
     public void testEvalOr() {
-        assertEquals(Bool.FALSE, read("(or)").eval(ENV));
-        assertEquals(integer(1), read("(or false 1)").eval(ENV));
-        assertEquals(integer(1), read("(or 1 2 3)").eval(ENV));
-        assertEquals(Bool.FALSE, read("(or false false false)").eval(ENV));
+        Env env = Env.of(ENV);
+        assertEquals(Bool.FALSE, read("(or)").eval(env));
+        assertEquals(integer(1), read("(or false 1)").eval(env));
+        assertEquals(integer(1), read("(or 1 2 3)").eval(env));
+        assertEquals(Bool.FALSE, read("(or false false false)").eval(env));
     }
 
     @Test
     public void testEvalRecursion() {
-        read("(define (fact n) (if (<= n 0) 1 (* n (fact (- n 1)))))").eval(ENV);
-        assertEquals(integer(1), read("(fact 0)").eval(ENV));
-        assertEquals(integer(1), read("(fact 1)").eval(ENV));
-        assertEquals(integer(2), read("(fact 2)").eval(ENV));
-        assertEquals(integer(6), read("(fact 3)").eval(ENV));
-        assertEquals(integer(24), read("(fact 4)").eval(ENV));
+        Env env = Env.of(ENV);
+        read("(define (fact n) (if (<= n 0) 1 (* n (fact (- n 1)))))").eval(env);
+        assertEquals(integer(1), read("(fact 0)").eval(env));
+        assertEquals(integer(1), read("(fact 1)").eval(env));
+        assertEquals(integer(2), read("(fact 2)").eval(env));
+        assertEquals(integer(6), read("(fact 3)").eval(env));
+        assertEquals(integer(24), read("(fact 4)").eval(env));
     }
 }
