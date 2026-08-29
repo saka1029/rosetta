@@ -10,9 +10,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.IntBinaryOperator;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public class Lisp {
 
@@ -221,9 +218,9 @@ public class Lisp {
             };
         }
 
-        default Stream<Expr> stream() {
-            return StreamSupport.stream(spliterator(), false);
-        }
+        // default Stream<Expr> stream() {
+        //     return StreamSupport.stream(spliterator(), false);
+        // }
     }
 
     public record Cons(Expr car, Expr cdr) implements List {
@@ -420,12 +417,6 @@ public class Lisp {
             for (Expr b = body; b instanceof Cons c; b = c.cdr)
                 result = c.car().eval(env);
             return result;
-            // if (!(body instanceof Cons b))
-            //     return body.eval(env);
-            // if (b.cdr() == List.NIL)
-            //     return b.car().eval(env);
-            // b.car().eval(env);
-            // return progn(b.cdr(), env);
         }
 
         @Override
@@ -449,13 +440,17 @@ public class Lisp {
         e.define(Symbol.of(name), value);
     }
 
-    static Int intOperator(List args, int unit, IntBinaryOperator operator) {
-        return Int.of(args.stream().mapToInt(a -> a.asInt().value()).reduce(unit, operator));
-    }
-
-    static Int intOperator2(List args, int unit, IntBinaryOperator operator) {
-        IntStream is = args.stream().mapToInt(a -> a.asInt().value());
-        return Int.of(args.size() <= 1 ? is.reduce(unit, operator) : is.reduce(operator).getAsInt());
+    static Int intArithmetic(List args, int start, IntBinaryOperator operator) {
+        int count = 0, prev = 0;
+        for (Expr e : args) {
+            int value = e.asInt().value;
+            if (count == 1)
+                start = prev;
+            start = operator.applyAsInt(start, value);
+            count++;
+            prev = value;
+        }
+        return Int.of(start);
     }
 
     public interface IntBinaryPredicate {
@@ -528,10 +523,10 @@ public class Lisp {
         procedure(ENV, "cons", args -> Cons.of(args.at(0), args.at(1)));
         procedure(ENV, "list", args -> args);
         procedure(ENV, "not", args -> Bool.of(!args.at(0).asBool().value));
-        procedure(ENV, "+", args -> intOperator(args, 0, (a, b) -> a + b));
-        procedure(ENV, "-", args -> intOperator2(args, 0, (a, b) -> a - b));
-        procedure(ENV, "*", args -> intOperator(args, 1, (a, b) -> a * b));
-        procedure(ENV, "/", args -> intOperator2(args, 1, (a, b) -> a / b));
+        procedure(ENV, "+", args -> intArithmetic(args, 0, (a, b) -> a + b));
+        procedure(ENV, "-", args -> intArithmetic(args, 0, (a, b) -> a - b));
+        procedure(ENV, "*", args -> intArithmetic(args, 1, (a, b) -> a * b));
+        procedure(ENV, "/", args -> intArithmetic(args, 1, (a, b) -> a / b));
         procedure(ENV, "=", args -> intCompare(args, (a, b) -> a == b));
         procedure(ENV, "!=", args -> intCompare(args, (a, b) -> a != b));
         procedure(ENV, "<", args -> intCompare(args, (a, b) -> a < b));
