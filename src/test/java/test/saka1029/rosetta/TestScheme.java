@@ -5,6 +5,8 @@ import static saka1029.rosetta.Scheme.*;
 
 import org.junit.Test;
 
+import saka1029.rosetta.Scheme;
+
 public class TestScheme {
 
     static Symbol sym(String name) { return new Symbol(name);}
@@ -23,5 +25,14 @@ public class TestScheme {
             return i(i(car(evaled)) + i(car(cdr(evaled))));
         });
         assertEquals(i(3), eval(list(sym("+"), i(1), i(2)), env));
+    }
+
+    static Expr read(String s) {
+        return Reader.of(s).read();
+    }
+
+    @Test
+    public void testRead() {
+        assertEquals(list(i(1), sym("a")), read("(1 a)"));
     }
 }

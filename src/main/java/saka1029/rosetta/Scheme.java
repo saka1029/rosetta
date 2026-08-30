@@ -1,5 +1,7 @@
 package saka1029.rosetta;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -100,8 +102,8 @@ public class Scheme {
         return r;
     }
 
-    public static Expr list(List<Expr> list) {
-        Expr r = NIL;
+    public static Expr list(Expr dot, List<Expr> list) {
+        Expr r = dot;
         for (int i = list.size() - 1; i >= 0; --i)
             r = new Cons(list.get(i), r);
         return r;
@@ -111,6 +113,127 @@ public class Scheme {
         List<Expr> list = new ArrayList<>();
         for (Expr e = args; e instanceof Cons c; e = c.cdr)
             list.add(eval(c.car, env));
-        return list(list);
+        return list(NIL, list);
+    }
+
+    public static class Reader {
+        public static final Expr EOF = new Expr() {};
+
+        final java.io.Reader reader;
+        final StringBuilder buffer = new StringBuilder();
+        int ch;
+
+        Reader(java.io.Reader reader) {
+            this.reader = reader;
+            this.ch = get();
+        }
+
+        public static Reader of(java.io.Reader reader) {
+            return new Reader(reader);
+        }
+
+        public static Reader of(String source) {
+            return Reader.of(new StringReader(source));
+        }
+
+        int get() {
+            try {
+                ch = reader.read();
+                buffer.append((char)ch);    // ch == EOFの時もappendする
+                return ch;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        int getClear() {
+            buffer.setLength(0);
+            return get();
+        }
+
+        void spaces() {
+            while (Character.isWhitespace(ch))
+                get();
+            buffer.delete(0, buffer.length() - 1);
+        }
+
+        Expr list() {
+            getClear();     // skip '('
+            List<Expr> list = new ArrayList<>();
+            while (true) {
+                spaces();
+                if (ch == ')') {
+                    getClear();  // skip ')'
+                    return Scheme.list(NIL, list);
+                } else if (ch == '.') {
+                    getClear();  // skip '.'
+                    Expr result = Scheme.list(read(), list);
+                    spaces();
+                    if (ch != ')')
+                        throw new RuntimeException("')' expected");
+                    getClear();  // skip ')'
+                    return result;
+                }
+                Expr e = read();
+                if (e == EOF)
+                    throw new RuntimeException("Unexpected EOF");
+                list.addLast(e);
+            }
+        }
+
+        Expr quote() {
+            getClear();  // skip '\''
+            return Scheme.list(Scheme.QUOTE, read());
+        }
+
+        static boolean isDigit(int ch) {
+            return ch >= '0' && ch <= '9';
+        }
+
+        Int integer() {
+            while (isDigit(ch))
+                get();
+            return new Int(Integer.parseInt(buffer.substring(0, buffer.length() - 1)));
+        }
+
+        static boolean isSymbolFirst(int ch) {
+            return switch (ch) {
+                case -1, '(', ')', '.' -> false;
+                default -> !Character.isWhitespace(ch) && !isDigit(ch);
+            };
+        }
+
+        static boolean isSymbolRest(int ch) {
+            return isSymbolFirst(ch) || isDigit(ch) || ch == '.';
+        }
+
+        Expr symbol() {
+            while (isSymbolRest(ch))
+                get();
+            String value = buffer.substring(0, buffer.length() - 1);
+            return switch (value) {
+                case "true" -> Scheme.TRUE;
+                case "false" -> Scheme.FALSE;
+                default -> new Symbol(value);
+            };
+        }
+
+        public Expr read() {
+            spaces();
+            if (ch == -1)
+                return EOF;
+            else if (ch == '(')
+                return list();
+            else if (ch == '\'')
+                return quote();
+            else if (ch == '-')
+                return isDigit(get()) ? integer() : new Symbol("-");
+            else if (isDigit(ch))
+                return integer();
+            else if (isSymbolFirst(ch))
+                return symbol();
+            else 
+                throw new RuntimeException("Unexpected character '%c'".formatted((char)ch));
+        }
     }
 }
