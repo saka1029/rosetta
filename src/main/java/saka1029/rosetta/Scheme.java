@@ -123,17 +123,13 @@ public class Scheme {
         final StringBuilder buffer = new StringBuilder();
         int ch;
 
-        Reader(java.io.Reader reader) {
+        public Reader(java.io.Reader reader) {
             this.reader = reader;
             this.ch = get();
         }
 
-        public static Reader of(java.io.Reader reader) {
-            return new Reader(reader);
-        }
-
-        public static Reader of(String source) {
-            return Reader.of(new StringReader(source));
+        public Reader(String source) {
+            this(new StringReader(source));
         }
 
         int get() {
@@ -235,5 +231,18 @@ public class Scheme {
             else 
                 throw new RuntimeException("Unexpected character '%c'".formatted((char)ch));
         }
+    }
+
+    public static Expr cons(Expr a, Expr b) { return new Cons(a, b); }
+    public static Symbol sym(String name) { return new Symbol(name);}
+    public static Int i(int value) { return new Int(value);}
+    public static int i(Expr e) { return ((Int)e).value();}
+
+    public static Env defaultEnv() {
+        Env env = define(null, QUOTE, (Apply)(a, e ) -> (car((a))));
+        env = define(env, sym("car"), (Apply)(a, e ) -> car(car(evlis(a, e))));
+        env = define(env, sym("cdr"), (Apply)(a, e ) -> cdr(car(evlis(a, e))));
+        env = define(env, sym("cons"), (Apply)(a, e ) -> { Expr v = evlis(a, e); return cons(car(v), car(cdr(v))); });
+        return env;
     }
 }
