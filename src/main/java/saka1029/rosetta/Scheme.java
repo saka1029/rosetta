@@ -64,8 +64,30 @@ public class Scheme {
             case Int i -> "" + i.value;
             case Nil n -> "()";
             case Cons c -> printCons(c);
-            default -> throw new RuntimeException("Unknown type " + e)
-        }
+            default -> throw new RuntimeException("Unknown type " + e);
+        };
+    }
+
+    interface Apply extends Expr {
+        Expr apply(Expr args, Env env);
+    }
+
+
+    Expr eval(Expr e, Env env) {
+        return switch (e) {
+            case Symbol s -> get(env, s);
+            case Bool b -> b;
+            case Int i -> i;
+            case Nil n -> n;
+            case Cons c -> {
+                Expr head = eval(c, env);
+                if (head instanceof Apply app)
+                    yield app.apply(c.cdr, env);
+                else
+                    throw new RuntimeException("Cannot apply " + e);
+            }
+            default -> throw new RuntimeException("Unknown type " + e);
+        };
     }
 
 }
