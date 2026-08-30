@@ -9,7 +9,7 @@ public class TestScheme {
 
     static Symbol sym(String name) { return new Symbol(name);}
     static Int i(int value) { return new Int(value);}
-    static Int i(Expr e) { return (Int)e;}
+    static int i(Expr e) { return ((Int)e).value();}
 
     @Test
     public void testEval() {
@@ -20,7 +20,7 @@ public class TestScheme {
         assertEquals(FALSE, eval(FALSE, env));
         env = define(env, sym("+"), (Apply)(a, e) -> {
             Expr evaled = evlis(a, e);
-            return i(i(car(evaled)).value() + i(car(cdr(evaled))).value());
+            return i(i(car(evaled)) + i(car(cdr(evaled))));
         });
         assertEquals(i(3), eval(list(sym("+"), i(1), i(2)), env));
     }
