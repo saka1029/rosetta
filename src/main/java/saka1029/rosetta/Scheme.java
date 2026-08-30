@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntBinaryOperator;
 
 public class Scheme {
 
@@ -114,6 +115,19 @@ public class Scheme {
         for (Expr e = args; e instanceof Cons c; e = c.cdr)
             list.add(eval(c.car, env));
         return list(NIL, list);
+    }
+
+    public static Env pairlis(Expr parms, Expr args, Env env) {
+        for (Expr p = parms; p instanceof Cons c; p = c.cdr, args = cdr(args))
+            env = define(env, (Symbol)c.car, car(args));
+        return env;
+    }
+
+    public static Expr progn(Expr body, Env env) {
+        Expr r = NIL;
+        for (Expr b = body; b instanceof Cons c; b = c.cdr)
+            r = eval(c.car, env);
+        return r;
     }
 
     public static class Reader {
@@ -233,16 +247,39 @@ public class Scheme {
         }
     }
 
+    static Int intArithmetic(Expr args, int start, IntBinaryOperator operator) {
+        int count = 0, prev = 0;
+        for (Expr a = args; a instanceof Cons c; a = c.cdr) {
+            int value = i(c.car);
+            if (count == 1)
+                start = prev;
+            start = operator.applyAsInt(start, value);
+            count++;
+            prev = value;
+        }
+        return i(start);
+    }
+
     public static Expr cons(Expr a, Expr b) { return new Cons(a, b); }
     public static Symbol sym(String name) { return new Symbol(name);}
     public static Int i(int value) { return new Int(value);}
     public static int i(Expr e) { return ((Int)e).value();}
 
     public static Env defaultEnv() {
-        Env env = define(null, QUOTE, (Apply)(a, e ) -> (car((a))));
-        env = define(env, sym("car"), (Apply)(a, e ) -> car(car(evlis(a, e))));
-        env = define(env, sym("cdr"), (Apply)(a, e ) -> cdr(car(evlis(a, e))));
-        env = define(env, sym("cons"), (Apply)(a, e ) -> { Expr v = evlis(a, e); return cons(car(v), car(cdr(v))); });
+        Env env = null;
+        env = define(env, QUOTE, (Apply)(a, e) -> (car((a))));
+        env = define(env, sym("lambda"), (Apply)(a, e) -> {
+            Expr parms = car(a), body = cdr(a);
+            return (Apply)(aa, ee) -> {
+                Env n = pairlis(parms, evlis(aa, e), e);
+                return progn(body, n);
+            };
+        });
+        env = define(env, sym("car"), (Apply)(a, e) -> car(car(evlis(a, e))));
+        env = define(env, sym("cdr"), (Apply)(a, e) -> cdr(car(evlis(a, e))));
+        env = define(env, sym("cons"), (Apply)(a, e) -> { Expr v = evlis(a, e); return cons(car(v), car(cdr(v))); });
+        env = define(env, sym("+"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 0, (x, y) -> x + y));
+        env = define(env, sym("-"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 0, (x, y) -> x - y));
         return env;
     }
 }

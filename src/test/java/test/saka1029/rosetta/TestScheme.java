@@ -36,6 +36,12 @@ public class TestScheme {
         Env env = defaultEnv();
         assertEquals(i(1), evalRead("(car '(1 a))", env));
         assertEquals(sym("a"), evalRead("(cdr '(1 . a))", env));
+        assertEquals(sym("a"), evalRead("((lambda (a) (car a)) '(a b))", env));
+        assertEquals(i(6), evalRead("(+ 1 2 3)", env));
+        assertEquals(i(6), evalRead("(+ 1 2 (+ 1 2))", env));
+        assertEquals(i(0), evalRead("(-)", env));
+        assertEquals(i(-1), evalRead("(- 1)", env));
+        assertEquals(i(-4), evalRead("(- 1 2 3)", env));
     }
 
 }
