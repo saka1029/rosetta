@@ -300,7 +300,7 @@ public class Scheme {
         define(env, sym("car"), (Apply)(a, e) -> car(car(evlis(a, e))));
         define(env, sym("cdr"), (Apply)(a, e) -> cdr(car(evlis(a, e))));
         define(env, sym("cons"), (Apply)(a, e) -> { Expr v = evlis(a, e); return cons(car(v), car(cdr(v))); });
-        define(env, sym("not"), (Apply)(a, e) -> b(!b(car(evlis(a, e)))));
+        define(env, sym("not"), (Apply)(a, e) -> car(evlis(a, e)).equals(FALSE) ? TRUE : FALSE);
         define(env, sym("and"), (Apply)(a, e) -> {
             Expr last = TRUE;
             for (Expr x = a; x instanceof Cons c; x = c.cdr) {
