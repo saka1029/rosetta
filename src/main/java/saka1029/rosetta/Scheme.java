@@ -28,8 +28,9 @@ public class Scheme {
         public Env(KeyValue kv) { this.kv = kv; }
         public Env() { this(null); }
     }
-    public static void define(Env e, Symbol key, Expr value) {
+    public static Symbol define(Env e, Symbol key, Expr value) {
         e.kv = new KeyValue(e.kv, key, value);
+        return key;
     }
     public static Expr get(Env env, Symbol key) {
         for (KeyValue kv = env.kv; kv != null; kv = kv.prev)
@@ -295,11 +296,29 @@ public class Scheme {
             else
                 return NIL;
         });
-        define(env, sym("define"), (Apply)(a, e) -> { define(e, sym(car(a)), eval(car(cdr(a)), e)); return NIL;});
+        define(env, sym("define"), (Apply)(a, e) -> define(e, sym(car(a)), eval(car(cdr(a)), e)));
         define(env, sym("car"), (Apply)(a, e) -> car(car(evlis(a, e))));
         define(env, sym("cdr"), (Apply)(a, e) -> cdr(car(evlis(a, e))));
         define(env, sym("cons"), (Apply)(a, e) -> { Expr v = evlis(a, e); return cons(car(v), car(cdr(v))); });
         define(env, sym("not"), (Apply)(a, e) -> b(!b(car(evlis(a, e)))));
+        define(env, sym("and"), (Apply)(a, e) -> {
+            Expr last = TRUE;
+            for (Expr x = a; x instanceof Cons c; x = c.cdr) {
+                last = eval(c.car, e);
+                if (last.equals(FALSE))
+                    return last;
+            }
+            return last;
+        });
+        define(env, sym("or"), (Apply)(a, e) -> {
+            Expr last = FALSE;
+            for (Expr x = a; x instanceof Cons c; x = c.cdr) {
+                last = eval(c.car, e);
+                if (!last.equals(FALSE))
+                    return last;
+            }
+            return last;
+        });
         define(env, sym("+"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 0, (x, y) -> x + y));
         define(env, sym("-"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 0, (x, y) -> x - y));
         define(env, sym("*"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 1, (x, y) -> x * y));
