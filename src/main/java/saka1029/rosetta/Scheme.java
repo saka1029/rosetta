@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntBinaryOperator;
 
+import saka1029.rosetta.Lisp.IntBinaryPredicate;
+
 public class Scheme {
 
     private Scheme(){}
@@ -260,6 +262,10 @@ public class Scheme {
         return i(start);
     }
 
+    static Bool intCompare(Expr args, IntBinaryPredicate operator) {
+        return operator.test(i(car(args)), i(car(cdr(args)))) ? TRUE : FALSE;
+    }
+
     public static Expr cons(Expr a, Expr b) { return new Cons(a, b); }
     public static Symbol sym(String name) { return new Symbol(name);}
     public static Int i(int value) { return new Int(value);}
@@ -282,6 +288,12 @@ public class Scheme {
         env = define(env, sym("-"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 0, (x, y) -> x - y));
         env = define(env, sym("*"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 1, (x, y) -> x * y));
         env = define(env, sym("/"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 1, (x, y) -> x / y));
+        env = define(env, sym("=="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x == y));
+        env = define(env, sym("!="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x != y));
+        env = define(env, sym("<"), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x < y));
+        env = define(env, sym("<="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x <= y));
+        env = define(env, sym(">"), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x > y));
+        env = define(env, sym(">="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x >= y));
         return env;
     }
 }
