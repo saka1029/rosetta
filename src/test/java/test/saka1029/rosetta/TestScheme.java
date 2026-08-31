@@ -42,6 +42,13 @@ public class TestScheme {
         assertEquals(i(0), evalRead("(-)", env));
         assertEquals(i(-1), evalRead("(- 1)", env));
         assertEquals(i(-4), evalRead("(- 1 2 3)", env));
+        assertEquals(TRUE, evalRead("(== 2 2)", env));
+        assertEquals(FALSE, evalRead("(== 0 2)", env));
+        env = define(env, sym("fact"), evalRead("(lambda (n) (if (<= n 0) 1 (* n (fact (- n 1)))))", env));
+        assertEquals(i(1), evalRead("(fact 0)", env));
+        assertEquals(i(1), evalRead("(fact 1)", env));
+        assertEquals(i(2), evalRead("(fact 2)", env));
+        assertEquals(i(6), evalRead("(fact 3)", env));
     }
 
 }

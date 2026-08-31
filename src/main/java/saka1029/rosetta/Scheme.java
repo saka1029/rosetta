@@ -270,6 +270,7 @@ public class Scheme {
     public static Symbol sym(String name) { return new Symbol(name);}
     public static Int i(int value) { return new Int(value);}
     public static int i(Expr e) { return ((Int)e).value();}
+    public static boolean b(Expr e) { return ((Bool)e).value();}
 
     public static Env defaultEnv() {
         Env env = null;
@@ -277,9 +278,18 @@ public class Scheme {
         env = define(env, sym("lambda"), (Apply)(a, e) -> {
             Expr parms = car(a), body = cdr(a);
             return (Apply)(aa, ee) -> {
-                Env n = pairlis(parms, evlis(aa, e), e);
+                Env n = pairlis(parms, evlis(aa, ee), ee);
                 return progn(body, n);
             };
+        });
+        env = define(env, sym("if"), (Apply)(a, e) -> {
+            boolean p = b(eval(car(a), e));
+            if (p)
+                return eval(car(cdr(a)), e);
+            else if (!cdr(cdr(a)).equals(NIL))
+                return eval(car(cdr(cdr(a))), e);
+            else
+                return NIL;
         });
         env = define(env, sym("car"), (Apply)(a, e) -> car(car(evlis(a, e))));
         env = define(env, sym("cdr"), (Apply)(a, e) -> cdr(car(evlis(a, e))));
