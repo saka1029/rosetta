@@ -17,29 +17,27 @@ public class Scheme {
     public record Symbol(String name) implements Expr {}
     public static final Symbol QUOTE = new Symbol("quote");
 
-    public static class Env {
-        Symbol key; Expr value; Env prev;
-        public Env(Symbol key, Expr value, Env prev) {
-            this.key = key; this.value = value; this.prev = prev;
+    public static class KeyValue {
+        KeyValue prev; Symbol key; Expr value;
+        public KeyValue(KeyValue prev, Symbol key, Expr value) {
+            this.prev = prev; this.key = key; this.value = value;
         }
     }
-
-    public static Expr get(Env env, Symbol s) {
-        for (Env e = env; e != null; e = e.prev)
-            if (e.key.equals(s))
-                return e.value;
-        throw new RuntimeException("Env.get: Not found " + s);
+    public static class Env { KeyValue kv; }
+    public static void define(Env e, Symbol key, Expr value) {
+        e.kv = new KeyValue(e.kv, key, value);
     }
-
-    public static void set(Env env, Symbol s, Expr v) {
-        for (Env e = env; e != null; e = e.prev)
-            if (e.key.equals(s))
-                e.value = v;
-        throw new RuntimeException("Env.set: Not found " + s);
+    public static Expr get(Env env, Symbol key) {
+        for (KeyValue kv = env.kv; kv != null; kv = kv.prev)
+            if (kv.key.equals(key))
+                return kv.value;
+        throw new RuntimeException("Env.get: Not found " + key);
     }
-
-    public static Env define(Env env, Symbol s, Expr v) {
-        return new Env(s, v, env);
+    public static Expr set(Env env, Symbol key, Expr value) {
+        for (KeyValue kv = env.kv; kv != null; kv = kv.prev)
+            if (kv.key.equals(key))
+                return kv.value = value;
+        throw new RuntimeException("Env.set: Not found " + key);
     }
 
     public record Cons(Expr car, Expr cdr) implements Expr { }
@@ -121,7 +119,7 @@ public class Scheme {
 
     public static Env pairlis(Expr parms, Expr args, Env env) {
         for (Expr p = parms; p instanceof Cons c; p = c.cdr, args = cdr(args))
-            env = define(env, (Symbol)c.car, car(args));
+            define(env, (Symbol)c.car, car(args));
         return env;
     }
 
@@ -273,16 +271,16 @@ public class Scheme {
     public static boolean b(Expr e) { return ((Bool)e).value();}
 
     public static Env defaultEnv() {
-        Env env = null;
-        env = define(env, QUOTE, (Apply)(a, e) -> (car((a))));
-        env = define(env, sym("lambda"), (Apply)(a, e) -> {
+        Env env = new Env();
+        define(env, QUOTE, (Apply)(a, e) -> (car((a))));
+        define(env, sym("lambda"), (Apply)(a, e) -> {
             Expr parms = car(a), body = cdr(a);
             return (Apply)(aa, ee) -> {
                 Env n = pairlis(parms, evlis(aa, ee), ee);
                 return progn(body, n);
             };
         });
-        env = define(env, sym("if"), (Apply)(a, e) -> {
+        define(env, sym("if"), (Apply)(a, e) -> {
             boolean p = b(eval(car(a), e));
             if (p)
                 return eval(car(cdr(a)), e);
@@ -291,19 +289,19 @@ public class Scheme {
             else
                 return NIL;
         });
-        env = define(env, sym("car"), (Apply)(a, e) -> car(car(evlis(a, e))));
-        env = define(env, sym("cdr"), (Apply)(a, e) -> cdr(car(evlis(a, e))));
-        env = define(env, sym("cons"), (Apply)(a, e) -> { Expr v = evlis(a, e); return cons(car(v), car(cdr(v))); });
-        env = define(env, sym("+"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 0, (x, y) -> x + y));
-        env = define(env, sym("-"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 0, (x, y) -> x - y));
-        env = define(env, sym("*"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 1, (x, y) -> x * y));
-        env = define(env, sym("/"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 1, (x, y) -> x / y));
-        env = define(env, sym("=="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x == y));
-        env = define(env, sym("!="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x != y));
-        env = define(env, sym("<"), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x < y));
-        env = define(env, sym("<="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x <= y));
-        env = define(env, sym(">"), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x > y));
-        env = define(env, sym(">="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x >= y));
+        define(env, sym("car"), (Apply)(a, e) -> car(car(evlis(a, e))));
+        define(env, sym("cdr"), (Apply)(a, e) -> cdr(car(evlis(a, e))));
+        define(env, sym("cons"), (Apply)(a, e) -> { Expr v = evlis(a, e); return cons(car(v), car(cdr(v))); });
+        define(env, sym("+"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 0, (x, y) -> x + y));
+        define(env, sym("-"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 0, (x, y) -> x - y));
+        define(env, sym("*"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 1, (x, y) -> x * y));
+        define(env, sym("/"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 1, (x, y) -> x / y));
+        define(env, sym("=="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x == y));
+        define(env, sym("!="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x != y));
+        define(env, sym("<"), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x < y));
+        define(env, sym("<="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x <= y));
+        define(env, sym(">"), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x > y));
+        define(env, sym(">="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x >= y));
         return env;
     }
 }
