@@ -37,6 +37,9 @@ public class TestScheme {
         Env env = defaultEnv();
         assertEquals(i(1), evalRead("(car '(1 a))", env));
         assertEquals(sym("a"), evalRead("(cdr '(1 . a))", env));
+        assertEquals(FALSE, evalRead("(not true)", env));
+        assertEquals(TRUE, evalRead("(not false)", env));
+        assertEquals(FALSE, evalRead("(not (== 0 0))", env));
         assertEquals(sym("a"), evalRead("((lambda (a) (car a)) '(a b))", env));
         assertEquals(i(6), evalRead("(+ 1 2 3)", env));
         assertEquals(i(6), evalRead("(+ 1 2 (+ 1 2))", env));
@@ -50,6 +53,11 @@ public class TestScheme {
         assertEquals(i(1), evalRead("(fact 1)", env));
         assertEquals(i(2), evalRead("(fact 2)", env));
         assertEquals(i(6), evalRead("(fact 3)", env));
+        assertEquals(NIL, evalRead("(define fact2 (lambda (n) (if (<= n 0) 1 (* n (fact (- n 1))))))", env));
+        assertEquals(i(1), evalRead("(fact2 0)", env));
+        assertEquals(i(1), evalRead("(fact2 1)", env));
+        assertEquals(i(2), evalRead("(fact2 2)", env));
+        assertEquals(i(6), evalRead("(fact2 3)", env));
     }
 
 }

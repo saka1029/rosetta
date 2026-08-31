@@ -23,7 +23,11 @@ public class Scheme {
             this.prev = prev; this.key = key; this.value = value;
         }
     }
-    public static class Env { KeyValue kv; }
+    public static class Env {
+        KeyValue kv;
+        public Env(KeyValue kv) { this.kv = kv; }
+        public Env() { this(null); }
+    }
     public static void define(Env e, Symbol key, Expr value) {
         e.kv = new KeyValue(e.kv, key, value);
     }
@@ -43,8 +47,6 @@ public class Scheme {
     public record Cons(Expr car, Expr cdr) implements Expr { }
     record Nil() implements Expr {}
     public static Expr NIL = new Nil();
-    public static Expr car(Expr e) { return ((Cons)e).car; }
-    public static Expr cdr(Expr e) { return ((Cons)e).cdr; }
     public record Int(int value) implements Expr {}
     public record Bool(boolean value) implements Expr {}
     public static final Bool TRUE = new Bool(true);
@@ -107,26 +109,6 @@ public class Scheme {
         Expr r = dot;
         for (int i = list.size() - 1; i >= 0; --i)
             r = new Cons(list.get(i), r);
-        return r;
-    }
-
-    public static Expr evlis(Expr args, Env env) {
-        List<Expr> list = new ArrayList<>();
-        for (Expr e = args; e instanceof Cons c; e = c.cdr)
-            list.add(eval(c.car, env));
-        return list(NIL, list);
-    }
-
-    public static Env pairlis(Expr parms, Expr args, Env env) {
-        for (Expr p = parms; p instanceof Cons c; p = c.cdr, args = cdr(args))
-            define(env, (Symbol)c.car, car(args));
-        return env;
-    }
-
-    public static Expr progn(Expr body, Env env) {
-        Expr r = NIL;
-        for (Expr b = body; b instanceof Cons c; b = c.cdr)
-            r = eval(c.car, env);
         return r;
     }
 
@@ -266,9 +248,32 @@ public class Scheme {
 
     public static Expr cons(Expr a, Expr b) { return new Cons(a, b); }
     public static Symbol sym(String name) { return new Symbol(name);}
+    public static Symbol sym(Expr e) { return (Symbol)e;}
+    public static Expr car(Expr e) { return ((Cons)e).car; }
+    public static Expr cdr(Expr e) { return ((Cons)e).cdr; }
     public static Int i(int value) { return new Int(value);}
     public static int i(Expr e) { return ((Int)e).value();}
     public static boolean b(Expr e) { return ((Bool)e).value();}
+    public static Bool b(boolean b) { return b ? TRUE : FALSE; }
+
+    public static Expr evlis(Expr args, Env env) {
+        List<Expr> list = new ArrayList<>();
+        for (Expr e = args; e instanceof Cons c; e = c.cdr)
+            list.add(eval(c.car, env));
+        return list(NIL, list);
+    }
+
+    public static void pairlis(Expr parms, Expr args, Env env) {
+        for (Expr p = parms; p instanceof Cons c; p = c.cdr, args = cdr(args))
+            define(env, (Symbol)c.car, car(args));
+    }
+
+    public static Expr progn(Expr body, Env env) {
+        Expr r = NIL;
+        for (Expr b = body; b instanceof Cons c; b = c.cdr)
+            r = eval(c.car, env);
+        return r;
+    }
 
     public static Env defaultEnv() {
         Env env = new Env();
@@ -276,7 +281,8 @@ public class Scheme {
         define(env, sym("lambda"), (Apply)(a, e) -> {
             Expr parms = car(a), body = cdr(a);
             return (Apply)(aa, ee) -> {
-                Env n = pairlis(parms, evlis(aa, ee), ee);
+                Env n = new Env(e.kv);
+                pairlis(parms, evlis(aa, ee), n);
                 return progn(body, n);
             };
         });
@@ -289,9 +295,11 @@ public class Scheme {
             else
                 return NIL;
         });
+        define(env, sym("define"), (Apply)(a, e) -> { define(e, sym(car(a)), eval(car(cdr(a)), e)); return NIL;});
         define(env, sym("car"), (Apply)(a, e) -> car(car(evlis(a, e))));
         define(env, sym("cdr"), (Apply)(a, e) -> cdr(car(evlis(a, e))));
         define(env, sym("cons"), (Apply)(a, e) -> { Expr v = evlis(a, e); return cons(car(v), car(cdr(v))); });
+        define(env, sym("not"), (Apply)(a, e) -> b(!b(car(evlis(a, e)))));
         define(env, sym("+"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 0, (x, y) -> x + y));
         define(env, sym("-"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 0, (x, y) -> x - y));
         define(env, sym("*"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 1, (x, y) -> x * y));
